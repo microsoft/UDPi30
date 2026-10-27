@@ -842,10 +842,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#7-next-steps" class="md-nav__link">
+  <a href="#7-upgrading-from-udp-cicd" class="md-nav__link">
     <span class="md-ellipsis">
       
-        7. Next steps
+        7. Upgrading from udp-cicd
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Next steps
       
     </span>
   </a>
@@ -2222,10 +2233,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#7-next-steps" class="md-nav__link">
+  <a href="#7-upgrading-from-udp-cicd" class="md-nav__link">
     <span class="md-ellipsis">
       
-        7. Next steps
+        7. Upgrading from udp-cicd
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Next steps
       
     </span>
   </a>
@@ -2466,7 +2488,7 @@ workflow, and current limitations.</p>
 </code></pre></div>
 <h3 id="53-pin-a-specific-version">5.3 Pin a specific version<a class="headerlink" href="#53-pin-a-specific-version" title="Permanent link">&para;</a></h3>
 <p>For reproducible CI/CD pipelines, pin the version when installing:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>dotnet<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>--global<span class="w"> </span>udpi30<span class="w"> </span>--version<span class="w"> </span><span class="m">1</span>.14.0
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>dotnet<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>--global<span class="w"> </span>udpi30<span class="w"> </span>--version<span class="w"> </span><span class="m">1</span>.15.0
 </code></pre></div>
 <p>Or commit a <a href="https://learn.microsoft.com/dotnet/core/tools/local-tools">tool manifest</a> (<code>.config/dotnet-tools.json</code>) and run <code>dotnet tool restore</code>.</p>
 <hr />
@@ -2495,7 +2517,27 @@ workflow, and current limitations.</p>
 </code></pre></div>
 <p>If your firewall blocks nuget.org, install from a private NuGet feed with <code>--add-source &lt;feed-url&gt;</code>.</p>
 <hr />
-<h2 id="7-next-steps">7. Next steps<a class="headerlink" href="#7-next-steps" title="Permanent link">&para;</a></h2>
+<h2 id="7-upgrading-from-udp-cicd">7. Upgrading from udp-cicd<a class="headerlink" href="#7-upgrading-from-udp-cicd" title="Permanent link">&para;</a></h2>
+<p>Version 1.15.0 renames the project from <code>udp-cicd</code> to <code>udpi30</code>. Complete the following steps to migrate an existing installation.</p>
+<ol>
+<li>
+<p>Replace the .NET tools. The old packages are not updated in place.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>dotnet<span class="w"> </span>tool<span class="w"> </span>uninstall<span class="w"> </span>--global<span class="w"> </span>udp-cicd
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>dotnet<span class="w"> </span>tool<span class="w"> </span>uninstall<span class="w"> </span>--global<span class="w"> </span>udp-cicd-mcp
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>dotnet<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>--global<span class="w"> </span>udpi30
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>dotnet<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>--global<span class="w"> </span>udpi30-mcp
+</code></pre></div>
+</li>
+<li>
+<p>Update scripts, pipelines, and tool manifests that call <code>udp-cicd</code> or <code>udp-cicd-mcp</code> to call <code>udpi30</code> or <code>udpi30-mcp</code>.</p>
+</li>
+<li>Rename the MCP server entry from <code>udp-cicd</code> to <code>udpi30</code> and set its command to <code>udpi30-mcp</code> in <code>.mcp.json</code> or your editor's MCP configuration.</li>
+<li>Rename each project's <code>.udp-cicd</code> folder to <code>.udpi30</code>. The folder holds audit logs and metrics, and local state when you use the local state backend.</li>
+<li>If you copied the deployment example pipelines, rename the <code>UDP_CICD_DLL</code> variable to <code>UDPI30_DLL</code>.</li>
+<li>Download the Ontology Builder as <code>udpi30-ontology-win-x64.zip</code>. The release asset was previously named <code>udp-cicd-ontology-win-x64.zip</code>.</li>
+</ol>
+<hr />
+<h2 id="8-next-steps">8. Next steps<a class="headerlink" href="#8-next-steps" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../quickstart/">Quick start tutorial</a> -- Create and deploy your first deployment.</li>
 <li><a href="../../cli/commands/">CLI commands reference</a> -- Full reference for all <code>udpi30</code> commands.</li>
