@@ -1,0 +1,2926 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Project definition for Microsoft Unified Data Platform">
+      
+      
+      
+        <link rel="canonical" href="https://microsoft.github.io/UDPi30/troubleshooting/">
+      
+      
+        <link rel="prev" href="../cicd/azure-devops/">
+      
+      
+        <link rel="next" href="../advanced/state/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Troubleshooting - Unified Data Platform Deployment</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="light-green">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#troubleshooting" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Unified Data Platform Deployment" class="md-header__button md-logo" aria-label="Unified Data Platform Deployment" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Unified Data Platform Deployment
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Troubleshooting
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="light-green"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="light-green"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/microsoft/UDPi30" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    microsoft/UDPi30
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../getting-started/installation/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../guide/declarative-model/" class="md-tabs__link">
+          
+  
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../reference/environment-variables/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../cli/commands/" class="md-tabs__link">
+          
+  
+  
+  CLI Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../cicd/overview/" class="md-tabs__link">
+          
+  
+  
+  CI/CD
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Troubleshooting
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../advanced/state/" class="md-tabs__link">
+          
+  
+  
+  Advanced
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Unified Data Platform Deployment" class="md-nav__button md-logo" aria-label="Unified Data Platform Deployment" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Unified Data Platform Deployment
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/microsoft/UDPi30" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    microsoft/UDPi30
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/first-deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/declarative-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Declarative Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/development-workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Workflows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/udp-yml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    udp.yml Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/resource-types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Resource Types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/multi-platform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-platform (Entra + Azure)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/targets-variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Targets & Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security & Permissions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/admin-settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Admin / Tenant Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/secrets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Secrets Management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/templates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Templates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/service-principal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Principal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/mcp-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/editor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    udp.yml Editor (Windows)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/ontology-builder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ontology Builder (Windows)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/migrate-from-terraform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migrate from Terraform
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/migrate-from-fabric-cicd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migrate from fabric-cicd
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/environment-variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CLI Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI/CD
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CI/CD
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cicd/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cicd/github-actions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GitHub Actions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cicd/azure-devops/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Azure DevOps
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Authentication
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Authentication">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-defaultazurecredential-failed-to-retrieve-a-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 "DefaultAzureCredential failed to retrieve a token"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-invalid-client-secret-provided" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 "Invalid client secret provided"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-aadsts7000215-invalid-client-secret" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 "AADSTS7000215: Invalid client secret"
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-capacity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Capacity
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Capacity">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-capacity_id-is-not-a-valid-guid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 "capacity_id is not a valid GUID"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-capacity-not-found-or-deploy-creates-workspace-but-items-fail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 "Capacity not found" or deploy creates workspace but items fail
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-item-creation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Item creation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Item creation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-displayname-is-invalid-for-artifacttype" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 "DisplayName is Invalid for ArtifactType"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-itemdisplaynamenotavailableyet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 "ItemDisplayNameNotAvailableYet"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-notebookid-cannot-be-null" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 "NotebookId cannot be null"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-artifact-definition-parts-count-should-be-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 "Artifact definition parts count should be 1"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-invaliddefinitionformat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.5 "InvalidDefinitionFormat"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#36-missingdefinition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.6 "MissingDefinition"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#37-the-feature-is-not-available" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.7 "The feature is not available"
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-onelake-security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. OneLake security
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. OneLake security">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-universalsecurityfeaturedisabledforartifacttype" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 "UniversalSecurityFeatureDisabledForArtifactType"
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Environment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Environment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-there-is-a-publish-operation-in-progress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 "There is a publish operation in progress"
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Variables
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Variables">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-unresolved-variables-varmissing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 "Unresolved variables: ${var.missing}"
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Deployment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-deployment-locked-by-userhost" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 "Deployment locked by user@host"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-partial-deployment-rollback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 Partial deployment / rollback
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-cicd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. CI/CD
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. CI/CD">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#81-github-actions-process-completed-with-exit-code-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.1 GitHub Actions: "Process completed with exit code 1"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#82-udpi30-command-not-found-in-ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2 "udpi30: command not found" in CI
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-admin-tenant-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Admin / tenant settings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. Admin / tenant settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#91-admin-plan-reports-a-setting-as-unknown" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.1 admin plan reports a setting as "unknown"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#92-could-not-read-tenant-settings-403-forbidden" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.2 "Could not read tenant settings" / 403 Forbidden
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#93-a-change-applied-but-isnt-visible-yet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.3 A change applied but isn't visible yet
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#94-declared-security-groups-are-ignored" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.4 Declared security groups are ignored
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-connections" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Connections
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. Connections">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#101-validatediag-reports-a-connection-as-unreachable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.1 validate/diag reports a connection as "unreachable"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#102-a-connection-is-skipped-no-connection-string-or-endpoint-to-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.2 A connection is "skipped (no connection string or endpoint to test)"
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-getting-help" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Getting help
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Advanced
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advanced/state/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    State Management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advanced/drift/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Drift Detection
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advanced/policies/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy Enforcement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Authentication
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Authentication">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-defaultazurecredential-failed-to-retrieve-a-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 "DefaultAzureCredential failed to retrieve a token"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-invalid-client-secret-provided" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 "Invalid client secret provided"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-aadsts7000215-invalid-client-secret" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 "AADSTS7000215: Invalid client secret"
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-capacity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Capacity
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Capacity">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-capacity_id-is-not-a-valid-guid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 "capacity_id is not a valid GUID"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-capacity-not-found-or-deploy-creates-workspace-but-items-fail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 "Capacity not found" or deploy creates workspace but items fail
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-item-creation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Item creation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Item creation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-displayname-is-invalid-for-artifacttype" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 "DisplayName is Invalid for ArtifactType"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-itemdisplaynamenotavailableyet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 "ItemDisplayNameNotAvailableYet"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-notebookid-cannot-be-null" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 "NotebookId cannot be null"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-artifact-definition-parts-count-should-be-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 "Artifact definition parts count should be 1"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-invaliddefinitionformat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.5 "InvalidDefinitionFormat"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#36-missingdefinition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.6 "MissingDefinition"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#37-the-feature-is-not-available" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.7 "The feature is not available"
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-onelake-security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. OneLake security
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. OneLake security">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-universalsecurityfeaturedisabledforartifacttype" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 "UniversalSecurityFeatureDisabledForArtifactType"
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Environment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Environment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-there-is-a-publish-operation-in-progress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 "There is a publish operation in progress"
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Variables
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Variables">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-unresolved-variables-varmissing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 "Unresolved variables: ${var.missing}"
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Deployment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-deployment-locked-by-userhost" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 "Deployment locked by user@host"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-partial-deployment-rollback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 Partial deployment / rollback
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-cicd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. CI/CD
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. CI/CD">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#81-github-actions-process-completed-with-exit-code-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.1 GitHub Actions: "Process completed with exit code 1"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#82-udpi30-command-not-found-in-ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2 "udpi30: command not found" in CI
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-admin-tenant-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Admin / tenant settings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. Admin / tenant settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#91-admin-plan-reports-a-setting-as-unknown" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.1 admin plan reports a setting as "unknown"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#92-could-not-read-tenant-settings-403-forbidden" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.2 "Could not read tenant settings" / 403 Forbidden
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#93-a-change-applied-but-isnt-visible-yet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.3 A change applied but isn't visible yet
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#94-declared-security-groups-are-ignored" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.4 Declared security groups are ignored
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-connections" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Connections
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. Connections">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#101-validatediag-reports-a-connection-as-unreachable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.1 validate/diag reports a connection as "unreachable"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#102-a-connection-is-skipped-no-connection-string-or-endpoint-to-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.2 A connection is "skipped (no connection string or endpoint to test)"
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-getting-help" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Getting help
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h1>
+<p>This page lists common errors by category, with the cause and resolution for each. For a general environment check, run <code>udpi30 diag</code>, which validates the .NET runtime, Azure CLI status, and Fabric API connectivity.</p>
+<hr />
+<h2 id="1-authentication">1. Authentication<a class="headerlink" href="#1-authentication" title="Permanent link">&para;</a></h2>
+<h3 id="11-defaultazurecredential-failed-to-retrieve-a-token">1.1 "DefaultAzureCredential failed to retrieve a token"<a class="headerlink" href="#11-defaultazurecredential-failed-to-retrieve-a-token" title="Permanent link">&para;</a></h3>
+<p><strong>Cause:</strong> Not authenticated with Azure. When the service principal variables are not set, the tool falls back to <code>DefaultAzureCredential</code>, which requires a managed identity, environment credentials, or an active <code>az login</code> session.</p>
+<p><strong>Resolution:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Interactive login</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>az<span class="w"> </span>login
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Or set service principal env vars (ClientSecretCredential)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AZURE_TENANT_ID</span><span class="o">=</span><span class="s2">&quot;your-tenant-guid&quot;</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AZURE_CLIENT_ID</span><span class="o">=</span><span class="s2">&quot;your-client-guid&quot;</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AZURE_CLIENT_SECRET</span><span class="o">=</span><span class="s2">&quot;your-secret&quot;</span>
+</code></pre></div>
+<h3 id="12-invalid-client-secret-provided">1.2 "Invalid client secret provided"<a class="headerlink" href="#12-invalid-client-secret-provided" title="Permanent link">&para;</a></h3>
+<p><strong>Cause:</strong> The <code>AZURE_CLIENT_SECRET</code> value is wrong. A common mistake is copying the Secret ID instead of the Secret Value.</p>
+<p><strong>Resolution:</strong> In the Azure Portal, go to App registrations, select the app, open Certificates &amp; secrets, create a new secret, and copy the <strong>Value</strong> (not the ID).</p>
+<h3 id="13-aadsts7000215-invalid-client-secret">1.3 "AADSTS7000215: Invalid client secret"<a class="headerlink" href="#13-aadsts7000215-invalid-client-secret" title="Permanent link">&para;</a></h3>
+<p><strong>Cause:</strong> Same as 1.2, or the secret has expired.</p>
+<p><strong>Resolution:</strong> Create a new client secret and update the GitHub secrets or environment variables.</p>
+<hr />
+<h2 id="2-capacity">2. Capacity<a class="headerlink" href="#2-capacity" title="Permanent link">&para;</a></h2>
+<h3 id="21-capacity_id-is-not-a-valid-guid">2.1 "capacity_id is not a valid GUID"<a class="headerlink" href="#21-capacity_id-is-not-a-valid-guid" title="Permanent link">&para;</a></h3>
+<p><strong>Cause:</strong> The <code>capacity_id</code> in <code>udp.yml</code> is not in the correct format.</p>
+<p><strong>Resolution:</strong> Find the capacity GUID:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>az<span class="w"> </span>rest<span class="w"> </span>--method<span class="w"> </span>get<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--url<span class="w"> </span><span class="s2">&quot;https://api.fabric.microsoft.com/v1/capacities&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--resource<span class="w"> </span><span class="s2">&quot;https://api.fabric.microsoft.com&quot;</span>
+</code></pre></div>
+<p>Copy the <code>id</code> field (format: <code>xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</code>).</p>
+<h3 id="22-capacity-not-found-or-deploy-creates-workspace-but-items-fail">2.2 "Capacity not found" or deploy creates workspace but items fail<a class="headerlink" href="#22-capacity-not-found-or-deploy-creates-workspace-but-items-fail" title="Permanent link">&para;</a></h3>
+<p><strong>Cause:</strong> The capacity is paused or inactive, or the identity does not have access to it.</p>
+<p><strong>Resolution:</strong> In the Fabric Admin Portal, open Capacities and confirm the capacity shows "Active".</p>
+<hr />
+<h2 id="3-item-creation">3. Item creation<a class="headerlink" href="#3-item-creation" title="Permanent link">&para;</a></h2>
+<h3 id="31-displayname-is-invalid-for-artifacttype">3.1 "DisplayName is Invalid for ArtifactType"<a class="headerlink" href="#31-displayname-is-invalid-for-artifacttype" title="Permanent link">&para;</a></h3>
+<p><strong>Cause:</strong> Lakehouses, warehouses, and some other item types cannot have hyphens or spaces in their names.</p>
+<p><strong>Resolution:</strong> Use underscores instead of hyphens:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Wrong</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nt">lakehouses</span><span class="p">:</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nt">bronze-lakehouse</span><span class="p">:</span><span class="w">  </span><span class="c1"># ← hyphens not allowed</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1"># Right</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="nt">lakehouses</span><span class="p">:</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">  </span><span class="nt">bronze_lakehouse</span><span class="p">:</span><span class="w">  </span><span class="c1"># ← underscores only</span>
+</code></pre></div>
+<h3 id="32-itemdisplaynamenotavailableyet">3.2 "ItemDisplayNameNotAvailableYet"<a class="headerlink" href="#32-itemdisplaynamenotavailableyet" title="Permanent link">&para;</a></h3>
+<p><strong>Cause:</strong> An item with the same name was recently deleted. Fabric reserves the name for a few minutes.</p>
+<p><strong>Resolution:</strong> Wait 2-5 minutes and retry. udpi30 automatically retries retriable errors, but if the wait exceeds the retry window, run deploy again.</p>
+<h3 id="33-notebookid-cannot-be-null">3.3 "NotebookId cannot be null"<a class="headerlink" href="#33-notebookid-cannot-be-null" title="Permanent link">&para;</a></h3>
+<p><strong>Cause:</strong> Pipeline activities reference notebooks by ID, but the notebook was not found in the workspace.</p>
+<p><strong>Resolution:</strong> Ensure notebooks are deployed before pipelines. udpi30 handles this automatically through dependency ordering, but if a pipeline references notebooks from a different deployment, deploy those notebooks first.</p>
+<h3 id="34-artifact-definition-parts-count-should-be-1">3.4 "Artifact definition parts count should be 1"<a class="headerlink" href="#34-artifact-definition-parts-count-should-be-1" title="Permanent link">&para;</a></h3>
+<p><strong>Cause:</strong> Spark Job Definitions only accept a single definition part.</p>
+<p><strong>Resolution:</strong> This was a bug in earlier versions. Update to the latest version: <code>dotnet tool update --global udpi30</code></p>
+<h3 id="35-invaliddefinitionformat">3.5 "InvalidDefinitionFormat"<a class="headerlink" href="#35-invaliddefinitionformat" title="Permanent link">&para;</a></h3>
+<p><strong>Cause:</strong> The notebook definition format is not recognized by the Fabric API.</p>
+<p><strong>Resolution:</strong> Ensure the notebook files are valid <code>.py</code> or <code>.ipynb</code> files. udpi30 wraps <code>.py</code> files in ipynb format automatically.</p>
+<h3 id="36-missingdefinition">3.6 "MissingDefinition"<a class="headerlink" href="#36-missingdefinition" title="Permanent link">&para;</a></h3>
+<p><strong>Cause:</strong> Semantic Models and Reports require definition files (TMDL/PBIR) that do not exist locally.</p>
+<p><strong>Resolution:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Item type</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Semantic Models</td>
+<td>Export TMDL files from Power BI Desktop or the Fabric portal and place them in the <code>path</code> directory.</td>
+</tr>
+<tr>
+<td>Reports</td>
+<td>Export PBIR files from Power BI Desktop and place them in the <code>path</code> directory.</td>
+</tr>
+<tr>
+<td>Either</td>
+<td>Alternatively, remove the items from <code>udp.yml</code> and create them in the portal.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="37-the-feature-is-not-available">3.7 "The feature is not available"<a class="headerlink" href="#37-the-feature-is-not-available" title="Permanent link">&para;</a></h3>
+<p><strong>Cause:</strong> The item type requires a capacity feature that is not enabled (for example, dbt or EventSchemaSet).</p>
+<p><strong>Resolution:</strong> Contact your Fabric admin to enable the feature, or remove the item from <code>udp.yml</code>.</p>
+<hr />
+<h2 id="4-onelake-security">4. OneLake security<a class="headerlink" href="#4-onelake-security" title="Permanent link">&para;</a></h2>
+<h3 id="41-universalsecurityfeaturedisabledforartifacttype">4.1 "UniversalSecurityFeatureDisabledForArtifactType"<a class="headerlink" href="#41-universalsecurityfeaturedisabledforartifacttype" title="Permanent link">&para;</a></h3>
+<p><strong>Cause:</strong> OneLake data access roles require the security feature to be enabled per lakehouse.</p>
+<p><strong>Resolution:</strong></p>
+<ol>
+<li>Open the lakehouse in the Fabric portal.</li>
+<li>Click <strong>Manage OneLake security (preview)</strong> in the ribbon.</li>
+<li>Enable the feature.</li>
+<li>Run <code>udpi30 deploy</code> again.</li>
+</ol>
+<blockquote>
+<p><strong>Note</strong></p>
+<p>This is a per-item setting, not a tenant admin setting.</p>
+</blockquote>
+<hr />
+<h2 id="5-environment">5. Environment<a class="headerlink" href="#5-environment" title="Permanent link">&para;</a></h2>
+<h3 id="51-there-is-a-publish-operation-in-progress">5.1 "There is a publish operation in progress"<a class="headerlink" href="#51-there-is-a-publish-operation-in-progress" title="Permanent link">&para;</a></h3>
+<p><strong>Cause:</strong> A previous environment publish is still running. Environment publishes can take 5-10 minutes.</p>
+<p><strong>Resolution:</strong> Wait for the current publish to complete. Check status in the Fabric portal under the environment's details. udpi30 publishes are fire-and-forget, so the deploy itself succeeds.</p>
+<hr />
+<h2 id="6-variables">6. Variables<a class="headerlink" href="#6-variables" title="Permanent link">&para;</a></h2>
+<h3 id="61-unresolved-variables-varmissing">6.1 "Unresolved variables: ${var.missing}"<a class="headerlink" href="#61-unresolved-variables-varmissing" title="Permanent link">&para;</a></h3>
+<p><strong>Cause:</strong> A variable referenced in <code>udp.yml</code> has no value defined.</p>
+<p><strong>Resolution:</strong> Provide a value through one of the following:</p>
+<table>
+<thead>
+<tr>
+<th>Approach</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Default value</td>
+<td><code>variables: { missing: { default: "value" } }</code></td>
+</tr>
+<tr>
+<td>Target override</td>
+<td><code>targets: { dev: { variables: { missing: "value" } } }</code></td>
+</tr>
+<tr>
+<td>Environment variable</td>
+<td>Set the variable when using <code>${env.MISSING}</code></td>
+</tr>
+<tr>
+<td>Secret</td>
+<td>Set the secret before <code>plan</code> or <code>deploy</code> when using <code>${secret.MISSING}</code></td>
+</tr>
+</tbody>
+</table>
+<p>In deploy mode, unresolved variables cause a hard failure. In validate mode, use <code>--strict</code> to catch unresolved <code>${var.*}</code> and <code>${env.*}</code> references. <code>${secret.*}</code> and <code>${keyvault.*}</code> references remain deferred until plan or deploy, as described in <a href="../guide/secrets/">Secrets Management</a>.</p>
+<hr />
+<h2 id="7-deployment">7. Deployment<a class="headerlink" href="#7-deployment" title="Permanent link">&para;</a></h2>
+<h3 id="71-deployment-locked-by-userhost">7.1 "Deployment locked by user@host"<a class="headerlink" href="#71-deployment-locked-by-userhost" title="Permanent link">&para;</a></h3>
+<p><strong>Cause:</strong> A previous deployment did not release its lock (for example, it crashed mid-deploy).</p>
+<p><strong>Resolution:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>udpi30<span class="w"> </span>deploy<span class="w"> </span>--target<span class="w"> </span>dev<span class="w"> </span>--force<span class="w">  </span><span class="c1"># Override the lock</span>
+</code></pre></div>
+<p>Or manually delete the lock file:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>rm<span class="w"> </span>.udpi30/lock-dev.lock
+</code></pre></div>
+<h3 id="72-partial-deployment-rollback">7.2 Partial deployment / rollback<a class="headerlink" href="#72-partial-deployment-rollback" title="Permanent link">&para;</a></h3>
+<p><strong>Cause:</strong> Some items failed during creation. By default udpi30 then <strong>rolls back</strong> every item it created in that run, so the deployment is all-or-nothing.</p>
+<p><strong>Resolution:</strong> Check the error messages for the failed items. Fix the issues (naming, definitions, permissions) and run deploy again — items from previous runs show as "update" instead of "create".</p>
+<p>To keep the items that succeeded instead of rolling them all back, deploy with <code>--continue-on-error</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>udpi30<span class="w"> </span>deploy<span class="w"> </span>--target<span class="w"> </span>dev<span class="w"> </span>--continue-on-error
+</code></pre></div>
+<p>The deployment finishes as a partial success (exit code <code>1</code>), records what was created, and leaves the failed items for you to fix and redeploy. Items whose definition is missing (for example a semantic model or report with no definition files) are <strong>skipped</strong> with a warning rather than failing the deployment.</p>
+<hr />
+<h2 id="8-cicd">8. CI/CD<a class="headerlink" href="#8-cicd" title="Permanent link">&para;</a></h2>
+<h3 id="81-github-actions-process-completed-with-exit-code-1">8.1 GitHub Actions: "Process completed with exit code 1"<a class="headerlink" href="#81-github-actions-process-completed-with-exit-code-1" title="Permanent link">&para;</a></h3>
+<p><strong>Cause:</strong> A pipeline step failed. Common causes:</p>
+<table>
+<thead>
+<tr>
+<th>Cause</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Authentication</td>
+<td>Secrets not configured or expired</td>
+</tr>
+<tr>
+<td>Capacity</td>
+<td>Not active, or wrong GUID</td>
+</tr>
+<tr>
+<td>Naming</td>
+<td>Hyphens in resource names</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Resolution:</strong> Check the full log output in the Actions run. Run <code>udpi30 diag</code> locally to diagnose.</p>
+<h3 id="82-udpi30-command-not-found-in-ci">8.2 "udpi30: command not found" in CI<a class="headerlink" href="#82-udpi30-command-not-found-in-ci" title="Permanent link">&para;</a></h3>
+<p><strong>Cause:</strong> udpi30 is not installed in the CI environment.</p>
+<p><strong>Resolution:</strong> Add <code>dotnet tool install --global udpi30</code> before running udpi30 commands.</p>
+<hr />
+<h2 id="9-admin-tenant-settings">9. Admin / tenant settings<a class="headerlink" href="#9-admin-tenant-settings" title="Permanent link">&para;</a></h2>
+<h3 id="91-admin-plan-reports-a-setting-as-unknown">9.1 <code>admin plan</code> reports a setting as "unknown"<a class="headerlink" href="#91-admin-plan-reports-a-setting-as-unknown" title="Permanent link">&para;</a></h3>
+<p><strong>Cause:</strong> The key under <code>admin.tenant_settings</code> is not a valid <code>settingName</code> for your tenant. The <a href="https://learn.microsoft.com/en-us/fabric/admin/tenant-settings-index">tenant settings index</a> lists display titles, not the API identifiers udpi30 needs.</p>
+<p><strong>Resolution:</strong> List the real identifiers and match by title:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>az<span class="w"> </span>rest<span class="w"> </span>--method<span class="w"> </span>get<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>--url<span class="w"> </span><span class="s2">&quot;https://api.fabric.microsoft.com/v1/admin/tenantsettings&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>--resource<span class="w"> </span><span class="s2">&quot;https://api.fabric.microsoft.com&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>--query<span class="w"> </span><span class="s2">&quot;tenantSettings[].{name:settingName, title:title}&quot;</span><span class="w"> </span>-o<span class="w"> </span>table
+</code></pre></div>
+<p>Use the <code>name</code> column value as the key in <code>udp.yml</code>.</p>
+<h3 id="92-could-not-read-tenant-settings-403-forbidden">9.2 "Could not read tenant settings" / 403 Forbidden<a class="headerlink" href="#92-could-not-read-tenant-settings-403-forbidden" title="Permanent link">&para;</a></h3>
+<p><strong>Cause:</strong> The caller is not a Fabric administrator. Tenant settings require elevated permissions.</p>
+<p><strong>Resolution:</strong> Sign in as a <strong>Fabric administrator</strong>, or use a service principal granted the <code>Tenant.ReadWrite.All</code> delegated scope. The service principal must also be enabled to call admin APIs (Admin portal → <em>Service principals can access admin APIs used for updates</em>).</p>
+<h3 id="93-a-change-applied-but-isnt-visible-yet">9.3 A change applied but isn't visible yet<a class="headerlink" href="#93-a-change-applied-but-isnt-visible-yet" title="Permanent link">&para;</a></h3>
+<p><strong>Cause:</strong> Tenant setting changes propagate gradually.</p>
+<p><strong>Resolution:</strong> Wait — changes can take <strong>up to 15 minutes</strong> to take effect across the organization.</p>
+<h3 id="94-declared-security-groups-are-ignored">9.4 Declared security groups are ignored<a class="headerlink" href="#94-declared-security-groups-are-ignored" title="Permanent link">&para;</a></h3>
+<p><strong>Cause:</strong> The setting does not support per-group scoping (<code>canSpecifySecurityGroups</code> is false). <code>admin plan</code> prints a warning for this.</p>
+<p><strong>Resolution:</strong> Apply the setting org-wide (<code>enabled: true</code>/<code>false</code>) without <code>enabled_security_groups</code>.</p>
+<hr />
+<h2 id="10-connections">10. Connections<a class="headerlink" href="#10-connections" title="Permanent link">&para;</a></h2>
+<h3 id="101-validatediag-reports-a-connection-as-unreachable">10.1 <code>validate</code>/<code>diag</code> reports a connection as "unreachable"<a class="headerlink" href="#101-validatediag-reports-a-connection-as-unreachable" title="Permanent link">&para;</a></h3>
+<p><strong>Cause:</strong> The source <code>host:port</code> derived from the connection string or <code>endpoint</code> did not accept a TCP connection. Common reasons: the host name is wrong (<code>No such host is known</code>), a firewall or private endpoint blocks your machine, the source is paused, or the port is non-default and not specified.</p>
+<p><strong>Resolution:</strong></p>
+<ul>
+<li>Confirm the host resolves and is reachable from where you run the command (corporate networks and CI runners are often isolated from data sources).</li>
+<li>For non-standard ports, include the port in the connection string (<code>Server=host,1500</code>) or endpoint URL (<code>https://host:8443</code>).</li>
+<li>This is a <strong>reachability</strong> check only — a reachable source can still reject authentication. It does not validate credentials.</li>
+<li>To proceed despite an unreachable source, drop <code>--strict</code>; the check is a warning by default. Use <code>--skip-connection-check</code> to skip it entirely.</li>
+</ul>
+<h3 id="102-a-connection-is-skipped-no-connection-string-or-endpoint-to-test">10.2 A connection is "skipped (no connection string or endpoint to test)"<a class="headerlink" href="#102-a-connection-is-skipped-no-connection-string-or-endpoint-to-test" title="Permanent link">&para;</a></h3>
+<p><strong>Cause:</strong> The connection has neither a resolvable <code>connection_string_var</code> (the environment variable is unset) nor an <code>endpoint</code>, so no <code>host:port</code> could be derived.</p>
+<p><strong>Resolution:</strong> Set the <code>connection_string_var</code> environment variable, or add an <code>endpoint</code> to the connection in <code>udp.yml</code>.</p>
+<hr />
+<h2 id="11-getting-help">11. Getting help<a class="headerlink" href="#11-getting-help" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Run <code>udpi30 diag</code> to diagnose common issues.</li>
+<li>Check <a href="https://github.com/microsoft/UDPi30/issues">GitHub Issues</a> for known bugs.</li>
+<li>File a new issue with the full error message and your <code>udp.yml</code> (redact secrets).</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/microsoft/UDPi30" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://pypi.org/project/udpi30/" target="_blank" rel="noopener" title="pypi.org" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.8 200.5c-7.7-30.9-22.3-54.2-53.4-54.2h-40.1v47.4c0 36.8-31.2 67.8-66.8 67.8H172.7c-29.2 0-53.4 25-53.4 54.3v101.8c0 29 25.2 46 53.4 54.3 33.8 9.9 66.3 11.7 106.8 0 26.9-7.8 53.4-23.5 53.4-54.3v-40.7H226.2v-13.6h160.2c31.1 0 42.6-21.7 53.4-54.2 11.2-33.5 10.7-65.7 0-108.6M286.2 444.7a20.4 20.4 0 1 1 0-40.7 20.4 20.4 0 1 1 0 40.7M167.8 248.1h106.8c29.7 0 53.4-24.5 53.4-54.3V91.9c0-29-24.4-50.7-53.4-55.6-35.8-5.9-74.7-5.6-106.8.1-45.2 8-53.4 24.7-53.4 55.6v40.7h106.9v13.6h-147c-31.1 0-58.3 18.7-66.8 54.2-9.8 40.7-10.2 66.1 0 108.6 7.6 31.6 25.7 54.2 56.8 54.2H101v-48.8c0-35.3 30.5-66.4 66.8-66.4m-6.6-183.4a20.4 20.4 0 1 1 0 40.8 20.4 20.4 0 1 1 0-40.8"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "content.code.copy", "content.tabs.link"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
