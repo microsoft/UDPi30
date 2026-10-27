@@ -229,7 +229,7 @@ dotnet tool update --global udpi30
 For reproducible CI/CD pipelines, pin the version when installing:
 
 ```bash
-dotnet tool install --global udpi30 --version 1.14.0
+dotnet tool install --global udpi30 --version 1.15.0
 ```
 
 Or commit a [tool manifest](https://learn.microsoft.com/dotnet/core/tools/local-tools) (`.config/dotnet-tools.json`) and run `dotnet tool restore`.
@@ -280,7 +280,28 @@ If your firewall blocks nuget.org, install from a private NuGet feed with `--add
 
 ---
 
-## 7. Next steps
+## 7. Upgrading from udp-cicd
+
+Version 1.15.0 renames the project from `udp-cicd` to `udpi30`. Complete the following steps to migrate an existing installation.
+
+1. Replace the .NET tools. The old packages are not updated in place.
+
+    ```bash
+    dotnet tool uninstall --global udp-cicd
+    dotnet tool uninstall --global udp-cicd-mcp
+    dotnet tool install --global udpi30
+    dotnet tool install --global udpi30-mcp
+    ```
+
+2. Update scripts, pipelines, and tool manifests that call `udp-cicd` or `udp-cicd-mcp` to call `udpi30` or `udpi30-mcp`.
+3. Rename the MCP server entry from `udp-cicd` to `udpi30` and set its command to `udpi30-mcp` in `.mcp.json` or your editor's MCP configuration.
+4. Rename each project's `.udp-cicd` folder to `.udpi30`. The folder holds audit logs and metrics, and local state when you use the local state backend.
+5. If you copied the deployment example pipelines, rename the `UDP_CICD_DLL` variable to `UDPI30_DLL`.
+6. Download the Ontology Builder as `udpi30-ontology-win-x64.zip`. The release asset was previously named `udp-cicd-ontology-win-x64.zip`.
+
+---
+
+## 8. Next steps
 
 - [Quick start tutorial](../getting-started/quickstart.md) -- Create and deploy your first deployment.
 - [CLI commands reference](../cli/commands.md) -- Full reference for all `udpi30` commands.

@@ -6,6 +6,28 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.15.0] - 2026-10-26
+
+### Changed
+
+- **Breaking: the project is renamed from `udp-cicd` to `udpi30`.** The
+  repository is now [microsoft/UDPi30](https://github.com/microsoft/UDPi30) and the
+  documentation site is published at https://microsoft.github.io/UDPi30/.
+  - NuGet packages and .NET tool commands: `udp-cicd` is now `udpi30` and
+    `udp-cicd-mcp` is now `udpi30-mcp`.
+  - .NET projects, assemblies, and namespaces: `UdpCicd.*` is now `Udpi30.*`
+    (`Udpi30.Core`, `Udpi30.Cli`, `Udpi30.Mcp`, `Udpi30.Editor`,
+    `Udpi30.Ontology`), and the solution is `dotnet/udpi30.slnx`.
+  - Local state, audit, and metrics folder: `.udp-cicd` is now `.udpi30`.
+  - Pipeline variable in the deployment example pipelines: `UDP_CICD_DLL` is now `UDPI30_DLL`.
+  - MCP server registration name: `udp-cicd` is now `udpi30`.
+  - Release assets: `udp-cicd-ontology-win-x64.zip` is now
+    `udpi30-ontology-win-x64.zip`.
+  See [Upgrading from udp-cicd](docs/getting-started/installation.md#7-upgrading-from-udp-cicd)
+  for migration steps.
+- Documentation, README, schema `id`, and package metadata now point to
+  `microsoft/UDPi30`.
+
 ### Added
 
 - `scripts/Get-UdpYmlValues.ps1 -ProvisionServicePrincipal` creates the `sp-udpi30`

@@ -8,12 +8,12 @@
     <InvariantGlobalization>true</InvariantGlobalization>
 
     <!-- Package / assembly metadata (mirrors pyproject.toml) -->
-    <Version>1.14.0</Version>
+    <Version>1.15.0</Version>
     <Authors>UDP</Authors>
     <Company>Microsoft Unified Data Platform</Company>
     <Product>UDPI30</Product>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <RepositoryUrl>https://github.com/microsoft/udpi30</RepositoryUrl>
-    <PackageProjectUrl>https://microsoft.github.io/udpi30/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/microsoft/UDPi30</RepositoryUrl>
+    <PackageProjectUrl>https://microsoft.github.io/UDPi30/</PackageProjectUrl>
   </PropertyGroup>
 </Project>
