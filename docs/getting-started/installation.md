@@ -229,7 +229,7 @@ dotnet tool update --global udpi30
 For reproducible CI/CD pipelines, pin the version when installing:
 
 ```bash
-dotnet tool install --global udpi30 --version 1.15.0
+dotnet tool install --global udpi30 --version 1.15.1
 ```
 
 Or commit a [tool manifest](https://learn.microsoft.com/dotnet/core/tools/local-tools) (`.config/dotnet-tools.json`) and run `dotnet tool restore`.

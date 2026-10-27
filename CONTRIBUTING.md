@@ -89,6 +89,26 @@ dotnet run --project src/Udpi30.Mcp
 3. Run `dotnet test` and `dotnet format --verify-no-changes`.
 4. Submit a PR with a clear description.
 
+## Releasing
+
+Releases publish the `udpi30` and `udpi30-mcp` .NET tool packages to nuget.org
+through the [Publish NuGet](.github/workflows/nuget-publish.yml) workflow.
+
+1. Set `<Version>` in `dotnet/Directory.Build.props` and add a dated section to
+   `CHANGELOG.md`.
+2. Run `dotnet test` and `mkdocs build --clean`, then merge to `main`.
+3. Create a GitHub release tagged `vX.Y.Z`. The tag must match the version in
+   `Directory.Build.props`. Publishing the release runs the workflow, which builds,
+   tests, verifies, and pushes both packages.
+4. Run `mkdocs gh-deploy --clean` to publish the documentation.
+
+To validate the packaging without publishing, run the workflow manually
+(**Actions → Publish NuGet → Run workflow**) and leave **dry_run** selected. Setting
+**dry_run** to false publishes the version in `Directory.Build.props`.
+
+Publishing uses nuget.org Trusted Publishing, so no API key is stored. It requires a
+trusted publishing policy for `microsoft/UDPi30` and workflow `nuget-publish.yml`, and
+the `NUGET_USER` repository secret.
 ## Code of Conduct
 
 This project follows the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).

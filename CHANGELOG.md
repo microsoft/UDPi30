@@ -6,6 +6,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.15.1] - 2026-10-26
+
+### Added
+
+- **Publish NuGet workflow** (`.github/workflows/nuget-publish.yml`) builds, tests,
+  verifies, and publishes the `udpi30` and `udpi30-mcp` packages to nuget.org with
+  OIDC Trusted Publishing. It runs when a release is published, checks that the
+  release tag matches the package version, and offers a manual dry-run mode.
+- A **Releasing** section in `CONTRIBUTING.md` describes the release process.
 ## [1.15.0] - 2026-10-26
 
 ### Changed
