@@ -1,0 +1,6 @@
+{
+  "sources": [{ "name": "ehns-analytics", "type": "AzureEventHub" }],
+  "destinations": [{ "name": "telemetry_eventhouse", "type": "Eventhouse" }],
+  "streams": [],
+  "operators": []
+}

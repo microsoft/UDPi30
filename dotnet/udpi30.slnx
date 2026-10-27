@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Udpi30.Cli/Udpi30.Cli.csproj" />
+    <Project Path="src/Udpi30.Core/Udpi30.Core.csproj" />
+    <Project Path="src/Udpi30.Editor/Udpi30.Editor.csproj" />
+    <Project Path="src/Udpi30.Mcp/Udpi30.Mcp.csproj" />
+    <Project Path="src/Udpi30.Ontology/Udpi30.Ontology.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Udpi30.Core.Tests/Udpi30.Core.Tests.csproj" />
+    <Project Path="tests/Udpi30.Ontology.Tests/Udpi30.Ontology.Tests.csproj" />
+  </Folder>
+</Solution>

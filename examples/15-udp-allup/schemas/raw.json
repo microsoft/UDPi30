@@ -1,0 +1,5 @@
+{
+  "$schema": "raw-landing",
+  "description": "Raw landing zone layout",
+  "folders": ["landing", "archive"]
+}

@@ -1,0 +1,9 @@
+{
+  "name": "ingest_dataflow",
+  "queries": [
+    {
+      "name": "Sales",
+      "mashup": "section Section1; shared Sales = let Source = #table({\"order_id\"}, {}) in Source;"
+    }
+  ]
+}

@@ -1,0 +1,168 @@
+deployment:
+  name: ${{project_name}}
+  version: "0.1.0"
+  description: "Medallion lakehouse architecture — bronze/silver/gold"
+
+workspace:
+  # Your Fabric capacity GUID — find it in the Fabric Admin Portal → Capacities
+  capacity_id: ${{capacity_id}}
+  # Organize deployed items into Fabric workspace folders by type
+  # (Notebooks, Pipelines, Lakehouses, Models, Warehouses, …).
+  folders_by_type: true
+
+variables:
+  source_connection:
+    description: "Connection string for source data"
+    default: ""
+
+resources:
+  # ---------------------------------------------------------------------------
+  # Environments
+  # ---------------------------------------------------------------------------
+  environments:
+    spark_env:
+      runtime: "1.3"
+      libraries:
+        - semantic-link-labs
+        - delta-spark
+
+  # ---------------------------------------------------------------------------
+  # Lakehouses (Bronze / Silver / Gold)
+  # ---------------------------------------------------------------------------
+  lakehouses:
+    bronze_lakehouse:
+      description: "Raw data landing zone — append-only ingestion from source systems"
+      enable_schemas: true
+
+    silver_lakehouse:
+      description: "Cleaned and conformed data — validated, deduplicated, typed"
+      enable_schemas: true
+
+    gold_lakehouse:
+      description: "Business-ready aggregates and curated datasets for consumption"
+      enable_schemas: true
+
+  # ---------------------------------------------------------------------------
+  # Notebooks (ETL)
+  # ---------------------------------------------------------------------------
+  notebooks:
+    ingest_to_bronze:
+      path: ./notebooks/ingest_to_bronze.py
+      description: "Ingest raw data from source to bronze lakehouse"
+      environment: spark_env
+      default_lakehouse: bronze_lakehouse
+
+    bronze_to_silver:
+      path: ./notebooks/bronze_to_silver.py
+      description: "Clean, validate, and conform bronze data into silver"
+      environment: spark_env
+      default_lakehouse: silver_lakehouse
+
+    silver_to_gold:
+      path: ./notebooks/silver_to_gold.py
+      description: "Aggregate and curate silver data into gold datasets"
+      environment: spark_env
+      default_lakehouse: gold_lakehouse
+
+  # ---------------------------------------------------------------------------
+  # Pipelines
+  # ---------------------------------------------------------------------------
+  pipelines:
+    daily_medallion_refresh:
+      description: "End-to-end daily refresh: bronze → silver → gold"
+      schedule:
+        frequency: daily
+        cron: "0 6 * * *"
+        timezone: America/Chicago
+      activities:
+        - name: ingest
+          notebook: ingest_to_bronze
+        - name: clean
+          notebook: bronze_to_silver
+          depends_on: [ingest_to_bronze]
+        - name: curate
+          notebook: silver_to_gold
+          depends_on: [bronze_to_silver]
+
+  # ---------------------------------------------------------------------------
+  # Warehouse (optional SQL layer)
+  # ---------------------------------------------------------------------------
+  warehouses:
+    analytics_warehouse:
+      description: "SQL views and stored procedures over gold lakehouse"
+      sql_scripts:
+        - ./sql/create_gold_views.sql
+
+  # ---------------------------------------------------------------------------
+  # Semantic Model + Report
+  # ---------------------------------------------------------------------------
+  semantic_models:
+    analytics_model:
+      path: ./semantic_model/
+      description: "Power BI semantic model over gold lakehouse"
+      default_lakehouse: gold_lakehouse
+
+  reports:
+    dashboard:
+      path: ./reports/dashboard/
+      description: "Executive dashboard"
+      semantic_model: analytics_model
+
+  # ---------------------------------------------------------------------------
+  # Data Agent
+  # ---------------------------------------------------------------------------
+  data_agents:
+    analytics_agent:
+      description: "Natural language interface to gold layer data"
+      sources:
+        - gold_lakehouse
+        - analytics_warehouse
+      instructions: ./agent/instructions.md
+      few_shot_examples: ./agent/examples.yaml
+
+# ---------------------------------------------------------------------------
+# Security
+# ---------------------------------------------------------------------------
+security:
+  roles:
+    - name: data_engineers
+      entra_group: sg-data-engineering
+      workspace_role: contributor
+    - name: analysts
+      entra_group: sg-data-analysts
+      workspace_role: viewer
+      onelake_roles:
+        - tables: ["*"]
+          permissions: [read]
+
+# ---------------------------------------------------------------------------
+# Targets (Environments)
+# ---------------------------------------------------------------------------
+targets:
+  dev:
+    default: true
+    workspace:
+      name: ${{project_name}}-dev
+      # capacity_id: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"  # override per target
+    variables:
+      source_connection: "dev-connection-string"
+
+  staging:
+    workspace:
+      name: ${{project_name}}-staging
+      # capacity_id: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"  # override per target
+    variables:
+      source_connection: "staging-connection-string"
+
+  prod:
+    workspace:
+      name: ${{project_name}}-prod
+    run_as:
+      service_principal: sp-udp-prod
+    variables:
+      source_connection: "prod-connection-string"
+    security:
+      roles:
+        - name: auditors
+          entra_group: sg-compliance-audit
+          workspace_role: viewer

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "policy": {
+    "autoGrant": false,
+    "leastPrivilege": true,
+    "reference": "https://github.com/PatrickGallucci/PSAutoRBAC",
+    "workflow": ["discover", "evaluate", "generate", "operator-approved-apply", "revoke"]
+  },
+  "requirements": {
+    "Fabric": {
+      "itemDeployment": "Workspace Contributor",
+      "securityDeployment": "Workspace Admin",
+      "probe": "Fabric workspace roleAssignments REST"
+    },
+    "FabricAdmin": {
+      "itemDeployment": "Fabric administrator and Tenant.ReadWrite.All",
+      "probe": "Fabric Admin API tenant settings read"
+    },
+    "Azure": {
+      "itemDeployment": "Resource-specific roles at the narrowest resource-group scope; Resource Group Contributor only when the example creates its resource group",
+      "probe": "PSAutoRBAC Azure provider or AuthorizationFailed action/scope evidence"
+    },
+    "Entra": {
+      "itemDeployment": "Group.ReadWrite.All for groups; Application.ReadWrite.All for applications; read-only permissions when resolving existing principals",
+      "probe": "PSAutoRBAC Microsoft Graph command catalog; do not infer permissions from a generic 403"
+    },
+    "Purview": {
+      "itemDeployment": "Collection-scoped Purview role appropriate to the declared asset operation",
+      "probe": "PSAutoRBAC Purview provider metadata-policy check"
+    }
+  }
+}

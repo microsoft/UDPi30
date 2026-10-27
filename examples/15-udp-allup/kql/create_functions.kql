@@ -1,0 +1,5 @@
+// Latest reading per device
+.create-or-alter function with (folder = "telemetry") LatestReadings() {
+    DeviceTelemetry
+    | summarize arg_max(Timestamp, *) by DeviceId
+}

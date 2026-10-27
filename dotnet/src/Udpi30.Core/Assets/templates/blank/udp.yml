@@ -1,0 +1,77 @@
+deployment:
+  name: ${{project_name}}
+  version: "1.0.0"
+  description: "A Fabric Automation Deployment project"
+
+workspace:
+  # Organize deployed items into Fabric workspace folders by type
+  # (Notebooks, Pipelines, Lakehouses, …). A per-item `folder:` overrides this.
+  folders_by_type: true
+
+resources:
+  # Spark environment with libraries
+  environments:
+    spark_env:
+      runtime: "1.3"
+      libraries: []
+      # - semantic-link-labs
+      # - delta-spark
+
+  # Data storage
+  lakehouses:
+    my_lakehouse:
+      description: "Default lakehouse"
+      enable_schemas: true
+
+  # Notebooks — add your .py or .ipynb files to notebooks/
+  notebooks:
+    sample_notebook:
+      path: ./notebooks/sample_notebook.py
+      description: "Sample notebook"
+      environment: spark_env
+      default_lakehouse: my_lakehouse
+
+  # Orchestration — chain notebooks into pipelines
+  # pipelines:
+  #   sample_pipeline:
+  #     description: "Sample pipeline"
+  #     schedule:
+  #       cron: "0 6 * * *"
+  #       timezone: America/Chicago
+  #     activities:
+  #       - name: step1
+  #         notebook: sample_notebook
+
+  # SQL analytics
+  # warehouses:
+  #   my_warehouse:
+  #     description: "Analytics warehouse"
+  #     sql_scripts:
+  #       - ./resources/create_views.sql
+
+  # AI-powered data agent
+  # data_agents:
+  #   my_agent:
+  #     description: "Natural language data access"
+  #     sources: [my_lakehouse]
+  #     instructions: ./resources/agent_instructions.md
+
+# Deployment targets
+targets:
+  dev:
+    default: true
+    workspace:
+      name: ${{project_name}}-dev
+      capacity_id: "${{capacity_id}}"
+
+  # staging:
+  #   workspace:
+  #     name: ${{project_name}}-staging
+  #     capacity_id: "${{capacity_id}}"
+
+  # prod:
+  #   workspace:
+  #     name: ${{project_name}}-prod
+  #     capacity_id: "${{capacity_id}}"
+  #   run_as:
+  #     service_principal: sp-udp-prod

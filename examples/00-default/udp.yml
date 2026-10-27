@@ -1,0 +1,2379 @@
+# yaml-language-server: $schema=../../udp.schema.json
+#
+# 00-default — the COMPLETE udp.yml reference.
+#
+# One deployment definition that exercises every top-level section, every field,
+# every resource type (Fabric, Entra, Azure), every tenant (admin) setting, the
+# Microsoft Purview / information-protection settings, security, connections,
+# policies, notifications, state, and multi-environment targets.
+#
+# It is a COPY-PASTE CATALOGUE, not a starting template. Delete what you do not
+# need. Read README.md first — it explains the placeholders, the safety model for
+# tenant settings, and which items are inventory/contract-only.
+#
+#   udpi30 validate -f udp.yml --skip-connection-check
+#   udpi30 graph    -f udp.yml
+#   udpi30 plan     -t dev                  # dry-run, nothing is created
+#   udpi30 admin plan -f udp.yml            # READ-ONLY diff of tenant settings
+#
+# !! `udpi30 admin apply` rewrites ORG-WIDE Fabric policy. Never run it with this
+# !! file unmodified — the `admin:` baseline below is an opinionated example.
+#
+# Why one big file: the validator, harness, and editors read this file directly.
+# `include:` and `extends:` (see the bottom of this file) split a real project
+# across files; they are left commented here so every setting stays in one place.
+
+deployment:
+  name: default-complete
+  version: "1.0.0"
+  description: "Complete reference deployment: every resource type, tenant setting, security and Purview setting"
+  # Other udp.yml files this deployment depends on (recorded in state/history).
+  depends_on:
+    - ../01-minimal/udp.yml
+
+# -----------------------------------------------------------------------------
+# workspace — default Fabric workspace (targets may override every field)
+# -----------------------------------------------------------------------------
+workspace:
+  name: default-complete
+  # workspace_id: "<guid>"        # Deploy into an EXISTING workspace (wins over name). See the `existing` target.
+  capacity_id: "${var.capacity_id}"   # `capacity:` is deprecated — use capacity_id.
+  description: "Complete reference workspace (${deployment.name} v${deployment.version})"
+  # Group items into workspace folders by type (Notebooks, Pipelines, Lakehouses,
+  # Reports, Models, Databases, Warehouses, Environments, Agents, Variables,
+  # Data Engineering, Data Factory, Real-Time, Graph, Maps, Healthcare).
+  folders_by_type: true
+  git_integration:
+    provider: github                       # azuredevops | github
+    organization: "${var.git_organization}"
+    # project: "<ado-project>"             # Azure DevOps only
+    repository: "${var.git_repository}"
+    branch: main
+    directory: /examples/00-default/items
+
+# -----------------------------------------------------------------------------
+# variables — `${var.name}`. Short form (string) and long form (description/default).
+# Placeholders are zero-GUIDs / REPLACE-WITH-* so the file validates out of the box
+# and fails loudly (not silently) if deployed unchanged.
+# -----------------------------------------------------------------------------
+variables:
+  # Short form
+  environment: "dev"
+  region: "eastus"
+
+  # Long form
+  capacity_id:
+    description: "Fabric capacity GUID"
+    default: "00000000-0000-0000-0000-000000000000"
+  subscription_id:
+    description: "Target Azure subscription id"
+    default: "00000000-0000-0000-0000-000000000000"
+  tenant_id:
+    description: "Microsoft Entra tenant id"
+    default: "00000000-0000-0000-0000-000000000000"
+  existing_workspace_id:
+    description: "GUID of an existing workspace (used by the 'existing' target)"
+    default: "00000000-0000-0000-0000-000000000000"
+  git_organization:
+    description: "GitHub organization that owns the workspace repository"
+    default: "REPLACE-WITH-YOUR-GITHUB-ORG"
+  git_repository:
+    description: "Repository connected to the workspace"
+    default: "REPLACE-WITH-YOUR-REPOSITORY"
+  adls_connection_id:
+    description: "Fabric connection GUID for authenticated ADLS shortcuts (empty = unauthenticated)"
+    default: ""
+  entra_owner_object_id:
+    description: "Object id of the user/service principal that owns the Entra groups and apps"
+    default: "00000000-0000-0000-0000-000000000000"
+  workspace_owner_upn:
+    description: "UPN of the workspace owner"
+    default: "owner@contoso.com"
+  # Security-group object ids referenced by the tenant settings in `admin:`.
+  fabric_admins_group_id:
+    description: "Fabric platform administrators"
+    default: "00000000-0000-0000-0000-000000000000"
+  fabric_creators_group_id:
+    description: "Users allowed to create Fabric items and workspaces"
+    default: "00000000-0000-0000-0000-000000000000"
+  fabric_governance_group_id:
+    description: "Data governance stewards (certification, sensitivity labels, Purview)"
+    default: "00000000-0000-0000-0000-000000000000"
+  fabric_ai_users_group_id:
+    description: "Users allowed to use Copilot and AI experiences"
+    default: "00000000-0000-0000-0000-000000000000"
+  fabric_external_sharing_group_id:
+    description: "Users approved for guest access and external data sharing"
+    default: "00000000-0000-0000-0000-000000000000"
+  fabric_automation_group_id:
+    description: "Service principals allowed to call Fabric/admin APIs (includes the Purview scanner)"
+    default: "00000000-0000-0000-0000-000000000000"
+  fabric_contractors_group_id:
+    description: "Contractors (excluded from export settings and external sharing)"
+    default: "00000000-0000-0000-0000-000000000000"
+  outage_notification_group_id:
+    description: "Mail-enabled security group notified about service outages"
+    default: "00000000-0000-0000-0000-000000000000"
+
+# -----------------------------------------------------------------------------
+# azure — deployment-wide defaults for all azure_* resources
+# -----------------------------------------------------------------------------
+azure:
+  subscription: "${var.subscription_id}"
+  location: eastus
+
+# -----------------------------------------------------------------------------
+# resources
+# Resource keys must be unique across ALL types. lakehouses, warehouses,
+# eventhouses, kql_databases and sql_databases allow only letters, numbers and
+# underscores; Entra and Azure names follow their own platform rules.
+# -----------------------------------------------------------------------------
+resources:
+
+  # ===========================================================================
+  # FABRIC — Data Engineering
+  # ===========================================================================
+  environments:
+    spark_env:
+      description: "Shared Spark runtime 1.3 with libraries"
+      runtime: "1.3"
+      libraries:
+        - semantic-link-labs
+        - great-expectations>=0.18.0
+        - delta-spark>=3.0
+      conda_dependencies:
+        - numpy=1.26
+      spark_properties:
+        spark.sql.shuffle.partitions: "200"
+        spark.databricks.delta.autoCompact.enabled: "true"
+    spark_env_legacy:
+      description: "Spark runtime 1.2 (the other supported runtime)"
+      runtime: "1.2"
+      libraries: [azure-storage-blob]
+
+  lakehouses:
+    raw_lakehouse:
+      description: "Raw landing zone with every shortcut flavour"
+      enable_schemas: true
+      sql_endpoint_enabled: true
+      schemas:
+        - ./schemas/raw.json
+      shortcuts:
+        # ADLS Gen2 shortcut with a file transformation (CSV -> Delta, kept in sync)
+        - name: external_sales
+          target: "adls://stdatalakedev01.dfs.core.windows.net/sales/daily/*.csv"
+          path: Files
+          connection_id: "${var.adls_connection_id}"
+          transformation:
+            type: file
+            source_format: csv
+            destination_table: raw_sales
+            sync: true
+        # Nested JSON, flattened and decompressed
+        - name: api_events
+          target: "adls://stdatalakedev01.dfs.core.windows.net/events/*.json.gz"
+          path: Files
+          connection_id: "${var.adls_connection_id}"
+          transformation:
+            type: file
+            source_format: json
+            destination_table: raw_events
+            sync: true
+            flatten: true
+            compression: gzip
+        # Parquet and Excel sources
+        - name: partner_products
+          target: "s3://partner-bucket/shared/products/"
+          path: Files
+          transformation:
+            type: file
+            source_format: parquet
+            destination_table: partner_products
+        - name: finance_reports
+          target: "adls://stdatalakedev01.dfs.core.windows.net/finance/monthly/*.xlsx"
+          path: Files
+          connection_id: "${var.adls_connection_id}"
+          transformation:
+            type: file
+            source_format: excel
+            destination_table: finance_monthly
+        # Plain shortcuts (Tables location, no transformation)
+        - name: azure_sales_tables
+          target: "adls://stdatalakedev01.dfs.core.windows.net/sales/tables"
+          path: Tables
+        - name: partner_feed
+          target: "s3://partner-data-bucket/daily-feed"
+          path: Files
+        # Cross-workspace OneLake shortcut: onelake://<workspace-id>/<item-id>/<path>
+        - name: shared_dimensions
+          target: "onelake://00000000-0000-0000-0000-000000000001/00000000-0000-0000-0000-000000000002/Tables/dim_customer"
+          path: Tables
+    curated_lakehouse:
+      description: "Curated, business-ready datasets"
+      tables:
+        sales:
+          schema_path: ./schemas/sales.json
+          partition_by: [order_date]
+          description: "Curated sales fact table"
+        customers:
+          description: "Customer dimension"
+    ai_lakehouse:
+      description: "Unstructured data processed by AI shortcut transformations"
+      shortcuts:
+        - name: support_tickets
+          target: "adls://stdatalakedev01.dfs.core.windows.net/support/tickets/*.json"
+          path: Files
+          connection_id: "${var.adls_connection_id}"
+          transformation:
+            type: ai
+            ai_skill: summarize
+            ai_model: gpt-4o
+            destination_table: ticket_summaries
+        - name: global_feedback
+          target: "adls://stdatalakedev01.dfs.core.windows.net/feedback/*.json"
+          path: Files
+          connection_id: "${var.adls_connection_id}"
+          transformation:
+            type: ai
+            ai_skill: translate
+            ai_prompt: "Translate to English, preserve sentiment"
+            destination_table: feedback_english
+        - name: customer_emails
+          target: "adls://stdatalakedev01.dfs.core.windows.net/emails/inbox/*.json"
+          path: Files
+          connection_id: "${var.adls_connection_id}"
+          transformation:
+            type: ai
+            ai_skill: classify
+            ai_prompt: "Classify as: complaint, inquiry, feedback, urgent, spam"
+            destination_table: classified_emails
+    telemetry_lakehouse:
+      description: "Device telemetry (schemas and SQL endpoint explicitly disabled)"
+      enable_schemas: false
+      sql_endpoint_enabled: false
+
+  notebooks:
+    ingest_notebook:
+      path: ./notebooks/ingest.py
+      description: "Ingest raw data into the lakehouse"
+      environment: spark_env
+      default_lakehouse: raw_lakehouse
+      spark_properties:
+        spark.sql.shuffle.partitions: "400"
+      parameters:
+        source_path: "Files/landing"
+        batch_size: 1000
+        full_refresh: false
+      folder: ETL/Bronze
+    transform_notebook:
+      path: ./notebooks/transform.py
+      description: "Transform raw data into curated tables"
+      environment: spark_env
+      default_lakehouse: curated_lakehouse
+      folder: ETL/Gold
+    maintenance_notebook:
+      path: ./notebooks/maintenance.py
+      description: "Delta table maintenance (OPTIMIZE / VACUUM)"
+      environment: spark_env_legacy
+      default_lakehouse: curated_lakehouse
+    cross_workspace_notebook:
+      path: ./notebooks/cross_workspace.py
+      description: "Reads a lakehouse that lives in another workspace"
+      external_lakehouse: "workspace://shared-platform/shared_lakehouse"
+
+  spark_job_definitions:
+    batch_job:
+      description: "Scheduled Spark batch job"
+      path: ./spark_jobs/batch_job.py
+      environment: spark_env
+      default_lakehouse: curated_lakehouse
+      args: ["--mode", "full", "--epochs", "10"]
+      conf:
+        spark.executor.memory: "8g"
+        spark.sql.adaptive.enabled: "true"
+
+  graphql_apis:
+    data_api:
+      description: "GraphQL API over the curated lakehouse"
+      path: ./graphql/schema.graphql
+      data_source: curated_lakehouse
+
+  user_data_functions:
+    udf_helpers:
+      description: "Reusable user data functions"
+      path: ./functions/function.json
+      runtime: python
+
+  materialized_lake_views:
+    daily_sales_summary:
+      description: "Daily sales rollup refreshed on a schedule"
+      path: ./sql/daily_sales_summary.sql
+      default_lakehouse: curated_lakehouse
+      refresh_cron: "0 2 * * *"
+      folder: Views
+
+  # ===========================================================================
+  # FABRIC — Data Factory
+  # ===========================================================================
+  pipelines:
+    orchestration_pipeline:
+      description: "Cron-scheduled orchestration with chained activities"
+      schedule:
+        frequency: cron
+        cron: "0 6 * * *"
+        timezone: America/Chicago
+        start_time: "2026-01-01T00:00:00Z"
+        enabled: true
+      activities:
+        - name: ingest
+          notebook: ingest_notebook
+          parameters:
+            mode: incremental
+        - name: transform
+          notebook: transform_notebook
+          depends_on: [ingest]
+        - name: hourly_sync_run
+          pipeline: hourly_sync
+          depends_on: [transform]
+      folder: Orchestration
+    nightly_pipeline:
+      description: "Daily schedule"
+      schedule:
+        frequency: daily
+        timezone: UTC
+      activities:
+        - name: maintenance
+          notebook: maintenance_notebook
+    hourly_sync:
+      description: "Hourly schedule"
+      schedule:
+        frequency: hourly
+      activities:
+        - name: sync
+          notebook: ingest_notebook
+    weekly_rollup:
+      description: "Weekly schedule (disabled until reviewed)"
+      schedule:
+        frequency: weekly
+        timezone: America/New_York
+        enabled: false
+      activities:
+        - name: rollup
+          notebook: transform_notebook
+    monthly_close:
+      description: "Monthly schedule"
+      schedule:
+        frequency: monthly
+      activities:
+        - name: close
+          notebook: transform_notebook
+    one_time_backfill:
+      description: "Runs once at the given start time"
+      schedule:
+        frequency: once
+        start_time: "2026-12-31T23:00:00Z"
+      activities:
+        - name: backfill
+          notebook: ingest_notebook
+    manual_pipeline:
+      description: "Pipeline uploaded from a JSON definition file (no schedule)"
+      path: ./pipelines/manual_pipeline.json
+
+  copy_jobs:
+    copy_job:
+      description: "Copy data between stores"
+      path: ./copyjobs/copyjob.json
+
+  airflow_jobs:
+    airflow_dag:
+      description: "Apache Airflow orchestration job"
+      path: ./airflow/dag.py
+
+  mounted_data_factories:
+    mounted_adf:
+      description: "Mounted Azure Data Factory (the one declared under azure_data_factories)"
+      data_factory_id: "/subscriptions/${var.subscription_id}/resourceGroups/rg-data-platform/providers/Microsoft.DataFactory/factories/adf-analytics"
+
+  dbt_jobs:
+    dbt_transform:
+      description: "dbt transformation job (capacity-gated)"
+      path: ./dbt/dbt-project.json
+      environment: spark_env
+
+  dataflows:
+    ingest_dataflow:
+      description: "Dataflow Gen2"
+      path: ./dataflows/dataflow.json
+
+  # ===========================================================================
+  # FABRIC — Data Warehousing & Mirroring
+  # ===========================================================================
+  warehouses:
+    analytics_warehouse:
+      description: "SQL analytics warehouse"
+      sql_scripts:
+        - ./sql/create_views.sql
+      folder: Warehouse
+
+  sql_databases:
+    app_db:
+      description: "Operational SQL database"
+      sql_scripts:
+        - ./sql/app_schema.sql
+
+  mirrored_databases:
+    mirrored_sales:
+      description: "Mirrored SQL Server database"
+      source_type: SQLServer
+      connection: sql_source
+
+  mirrored_warehouses:
+    mirrored_dw:
+      description: "Mirrored warehouse (list-only)"
+      source_type: Snowflake
+
+  snowflake_databases:
+    snowflake_db:
+      description: "Snowflake-backed database"
+      connection: snowflake_conn
+
+  cosmosdb_databases:
+    cosmos_db:
+      description: "Cosmos DB mirrored database"
+      connection: cosmos_source
+
+  mirrored_databricks_catalogs:
+    databricks_catalog:
+      description: "Mirrored Azure Databricks catalog"
+      connection: databricks_conn
+
+  datamarts:
+    sales_datamart:
+      description: "Sales datamart (list-only)"
+      path: ./datamarts/sales.json
+
+  # ===========================================================================
+  # FABRIC — Power BI
+  # ===========================================================================
+  semantic_models:
+    sales_model:
+      path: ./semantic_model/
+      description: "Sales semantic model (TMDL)"
+      default_lakehouse: curated_lakehouse
+      auto_refresh: true
+      refresh_timeout: 900
+      after_deploy: [refresh]
+      depends_on_run: [orchestration_pipeline]
+      folder: BI/Models
+
+  reports:
+    sales_report:
+      path: ./reports/sales/
+      description: "Sales report (PBIR)"
+      semantic_model: sales_model
+      folder: BI/Reports
+    cross_workspace_report:
+      path: ./reports/cross_workspace/
+      description: "Report bound to a semantic model in another workspace"
+      external_semantic_model: "workspace://shared-platform/enterprise_model"
+
+  paginated_reports:
+    invoice_report:
+      description: "Paginated invoice report"
+      path: ./reports/invoices/invoice.rdl
+      data_source: sales_model
+
+  dashboards:
+    exec_dashboard:
+      description: "Executive dashboard (list-only)"
+
+  # ===========================================================================
+  # FABRIC — Data Science
+  # ===========================================================================
+  ml_models:
+    churn_model:
+      description: "Customer churn model"
+      path: ./ml/churn_model/
+      framework: sklearn
+  ml_experiments:
+    churn_experiment:
+      description: "Churn model training experiment"
+      path: ./ml/churn_experiment/
+
+  # ===========================================================================
+  # FABRIC — Real-Time Intelligence
+  # ===========================================================================
+  eventhouses:
+    telemetry_eventhouse:
+      description: "Eventhouse for IoT telemetry"
+      kql_scripts:
+        - ./kql/create_tables.kql
+        - ./kql/create_functions.kql
+      retention_days: 365
+      cache_days: 30
+
+  kql_databases:
+    telemetry_db:
+      description: "KQL database for device telemetry"
+      parent_eventhouse: telemetry_eventhouse
+      kql_scripts:
+        - ./kql/create_tables.kql
+
+  eventstreams:
+    telemetry_stream:
+      description: "Ingests IoT device events in real time"
+      path: ./eventstreams/eventstream.json
+      sources:
+        - type: event_hub
+          name: ehns-analytics
+        - type: iot_hub
+          name: iot-analytics-hub
+      destinations:
+        - type: eventhouse
+          name: telemetry_eventhouse
+
+  kql_querysets:
+    telemetry_queries:
+      description: "Saved KQL queries"
+      path: ./kql/queryset.json
+      data_source: telemetry_db
+
+  kql_dashboards:
+    ops_dashboard:
+      description: "Real-time operations dashboard"
+      path: ./kql/dashboard.json
+      data_source: telemetry_db
+
+  reflex:
+    anomaly_alerts:
+      description: "Data Activator alerting rules"
+      path: ./reflex/reflex.json
+
+  digital_twin_builders:
+    plant_twin:
+      description: "Digital twin builder"
+      path: ./twins/definition.json
+  digital_twin_builder_flows:
+    plant_twin_flow:
+      description: "Digital twin builder flow"
+      path: ./twins/flow.json
+      twin_builder: plant_twin
+
+  event_schema_sets:
+    event_schemas:
+      description: "Event schema set (capacity-gated)"
+      path: ./events/definition.json
+
+  graph_query_sets:
+    graph_queries:
+      description: "Saved graph queries"
+      path: ./graphs/queries.json
+      data_source: knowledge_graph
+
+  anomaly_detectors:
+    telemetry_anomaly_detector:
+      description: "Anomaly detection over telemetry"
+      path: ./anomaly/definition.json
+      data_source: telemetry_db
+
+  # ===========================================================================
+  # FABRIC — AI & Knowledge
+  # ===========================================================================
+  data_agents:
+    analytics_agent:
+      description: "Natural-language analytics agent"
+      sources:
+        - curated_lakehouse
+        - analytics_warehouse
+        - sales_model
+      instructions: ./agent/instructions.md
+      few_shot_examples: ./agent/examples.yaml
+      tables_in_scope:
+        - sales
+        - customers
+
+  operations_agents:
+    ops_agent:
+      description: "Operations copilot agent"
+      sources: [telemetry_db]
+      instructions: ./agent/ops_instructions.md
+
+  ontologies:
+    domain_ontology:
+      description: "Business domain ontology"
+      path: ./ontology/definition.json
+      data_sources: [curated_lakehouse]
+
+  # ===========================================================================
+  # FABRIC — Graph, Spatial, Healthcare, Shared configuration
+  # ===========================================================================
+  graphs:
+    knowledge_graph:
+      description: "Knowledge graph"
+      path: ./graphs/definition.json
+      data_source: curated_lakehouse
+  graph_models:
+    graph_model:
+      description: "Graph model definition"
+      path: ./graphs/model.json
+      data_source: curated_lakehouse
+  map_items:
+    asset_map:
+      description: "Geospatial asset map"
+      path: ./maps/definition.json
+  hls_cohorts:
+    patient_cohort:
+      description: "Healthcare cohort (capacity-gated)"
+      path: ./cohorts/definition.json
+  variable_libraries:
+    shared_vars:
+      description: "Workspace-shared variables"
+      variables:
+        region: westus2
+        tier: standard
+
+  # ===========================================================================
+  # MICROSOFT ENTRA (Microsoft Graph, tenant scope)
+  # The key is the displayName. Create is idempotent (same name = patch).
+  # Needs Group.ReadWrite.All / Application.ReadWrite.All.
+  # ===========================================================================
+  entra_groups:
+    sg-fabric-admins:
+      description: "Fabric platform administrators"
+      mail_nickname: sg-fabric-admins
+      security_enabled: true
+      mail_enabled: false
+      assignable_to_role: true
+      owners: ["${var.entra_owner_object_id}"]
+      members: []
+    sg-fabric-creators:
+      description: "Fabric item and workspace creators"
+      security_enabled: true
+      owners: ["${var.entra_owner_object_id}"]
+    sg-fabric-governance:
+      description: "Data governance stewards (labels, certification, Purview)"
+      security_enabled: true
+      owners: ["${var.entra_owner_object_id}"]
+    sg-fabric-ai-users:
+      description: "Copilot and AI experience users"
+      security_enabled: true
+    sg-fabric-external-sharing:
+      description: "Approved for guest access and external data sharing"
+      security_enabled: true
+    sg-fabric-automation:
+      description: "Service principals allowed to call Fabric and admin APIs"
+      security_enabled: true
+    sg-fabric-contractors:
+      description: "Contractors (restricted export and sharing)"
+      security_enabled: true
+    sg-data-engineers:
+      description: "Data engineering team"
+      security_enabled: true
+      members: ["${var.entra_owner_object_id}"]
+    sg-data-analysts:
+      description: "Business analysts"
+      security_enabled: true
+    sg-data-scientists:
+      description: "Data science team"
+      security_enabled: true
+
+  entra_apps:
+    app-udp-deploy:
+      description: "CI/CD identity that runs udpi30"
+      sign_in_audience: AzureADMyOrg
+      redirect_uris: ["https://localhost:5001/signin-oidc"]
+      identifier_uris: ["api://${var.tenant_id}/udp-deploy"]
+      create_service_principal: true
+    app-purview-scanner:
+      description: "Service principal Microsoft Purview uses to scan Fabric / Power BI"
+      sign_in_audience: AzureADMyOrg
+      create_service_principal: true
+    app-partner-portal:
+      description: "Multi-tenant app registration (no service principal created here)"
+      sign_in_audience: AzureADMultipleOrgs   # also: AzureADandPersonalMicrosoftAccount | PersonalMicrosoftAccount
+      redirect_uris:
+        - "https://portal.contoso.com/auth/callback"
+        - "https://portal.contoso.com/auth/silent"
+      create_service_principal: false
+
+  # ===========================================================================
+  # AZURE (ARM) — resource groups and storage accounts have first-class models
+  # ===========================================================================
+  azure_resource_groups:
+    rg-data-platform:
+      location: eastus
+      tags: { env: "${var.environment}", workload: data-platform, deployment: "${deployment.name}" }
+    rg-governance:
+      subscription: "${var.subscription_id}"     # per-resource subscription override
+      location: eastus
+      tags: { env: "${var.environment}", workload: governance, data-owner: data-platform-team }
+    rg-observability:
+      location: eastus
+      tags: { env: "${var.environment}", workload: observability }
+    rg-networking:
+      location: eastus
+      tags: { env: "${var.environment}", workload: networking }
+    rg-ai:
+      location: eastus2
+      tags: { env: "${var.environment}", workload: ai }
+
+  azure_storage_accounts:
+    stdataplatformdev01:                  # 3-24 lowercase letters and numbers
+      subscription: "${var.subscription_id}"
+      resource_group: rg-data-platform
+      location: eastus
+      sku: Standard_GRS
+      kind: StorageV2
+      access_tier: Cool
+      https_only: true
+      tags: { env: "${var.environment}", tier: archive }
+
+  # Generic escape hatch — any ARM resource via an author-supplied .bicep file.
+  azure_deployments:
+    purview-governance:                   # resource-group scope
+      scope: group
+      resource_group: rg-governance
+      location: eastus
+      template_file: ./bicep/purview-governance.bicep
+      parameters:
+        purviewAccountName: purview-analytics
+        logAnalyticsWorkspaceId: "/subscriptions/${var.subscription_id}/resourceGroups/rg-observability/providers/Microsoft.OperationalInsights/workspaces/law-analytics"
+    subscription-policy-baseline:         # subscription scope (policy + Defender for Cloud)
+      scope: subscription
+      subscription: "${var.subscription_id}"
+      location: eastus
+      template_file: ./bicep/policy-baseline.bicep
+      parameters:
+        requiredTagName: data-owner
+        enableDefender: false
+
+  # ===========================================================================
+  # AZURE SERVICES — each deploys as ONE ARM resource via generated Bicep.
+  # The generated template emits only location, sku.name, kind, properties and
+  # tags. Types needing sku.capacity/tier, identity, secrets or parent/extension
+  # scope are INVENTORY ENTRIES — deploy those with `azure_deployments`.
+  # ===========================================================================
+
+  # --- Integration / streaming / compute ---
+  azure_data_factories:
+    adf-analytics:
+      resource_group: rg-data-platform
+      properties: { publicNetworkAccess: Enabled }
+  azure_databricks_workspaces:
+    dbw-analytics:
+      resource_group: rg-data-platform
+      sku: premium
+      properties:
+        managedResourceGroupId: "/subscriptions/${var.subscription_id}/resourceGroups/rg-dbw-analytics-managed"
+        publicNetworkAccess: Enabled
+        requiredNsgRules: AllRules
+  azure_databricks_structured_streaming:
+    dbw-streaming:
+      resource_group: rg-data-platform
+      sku: premium
+      properties:
+        managedResourceGroupId: "/subscriptions/${var.subscription_id}/resourceGroups/rg-dbw-streaming-managed"
+  azure_event_hub_namespaces:
+    ehns-analytics:
+      resource_group: rg-data-platform
+      sku: Standard
+      properties:
+        isAutoInflateEnabled: true
+        maximumThroughputUnits: 4
+        disableLocalAuth: true
+  azure_event_grid_topics:
+    egt-analytics:
+      resource_group: rg-data-platform
+      properties:
+        inputSchema: CloudEventSchemaV1_0
+        publicNetworkAccess: Enabled
+        disableLocalAuth: true
+  azure_stream_analytics_jobs:
+    asa-analytics:
+      resource_group: rg-data-platform
+      properties:
+        sku: { name: Standard }
+        jobType: Cloud
+        eventsOutOfOrderPolicy: Adjust
+        outputErrorPolicy: Stop
+        eventsOutOfOrderMaxDelayInSeconds: 0
+        eventsLateArrivalMaxDelayInSeconds: 5
+        dataLocale: en-US
+  azure_iot_hubs:
+    iot-analytics-hub:
+      resource_group: rg-data-platform
+      sku: S1                              # IoT Hub also needs sku.capacity -> use azure_deployments for a real deploy
+      properties: { publicNetworkAccess: Enabled }
+  azure_logic_apps:
+    la-analytics:
+      resource_group: rg-data-platform
+      properties:
+        state: Enabled
+        definition:
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#"
+          contentVersion: "1.0.0.0"
+          triggers: {}
+          actions: {}
+  azure_functions:
+    func-analytics:
+      resource_group: rg-data-platform
+      kind: functionapp
+      properties: { httpsOnly: true, publicNetworkAccess: Enabled }
+
+  # --- Storage family (each deploys as a storage account; 3-24 lowercase alphanumerics) ---
+  azure_blob_storage:
+    stblobanalytics01:
+      resource_group: rg-data-platform
+      sku: Standard_LRS
+      kind: StorageV2
+      properties: { allowBlobPublicAccess: false, supportsHttpsTrafficOnly: true, minimumTlsVersion: TLS1_2 }
+  azure_data_lake_storage:
+    stadlsanalytics01:
+      resource_group: rg-data-platform
+      sku: Standard_LRS
+      kind: StorageV2
+      properties: { isHnsEnabled: true, allowBlobPublicAccess: false }
+  azure_files:
+    stfilesanalytics01:
+      resource_group: rg-data-platform
+      sku: Premium_LRS
+      kind: FileStorage
+  azure_queue_storage:
+    stqueueanalytics01:
+      resource_group: rg-data-platform
+      sku: Standard_LRS
+      kind: StorageV2
+  azure_table_storage:
+    sttableanalytics01:
+      resource_group: rg-data-platform
+      sku: Standard_LRS
+      kind: StorageV2
+
+  # --- Databases ---
+  # Credentials never belong here. Supply admin logins/passwords through
+  # azure_deployments with @secure() parameters sourced from Key Vault.
+  azure_sql_databases:
+    "sql-analytics-server/sqldb-analytics":   # <server>/<database>; the server must already exist
+      resource_group: rg-data-platform
+      sku: S0
+      properties: { collation: SQL_Latin1_General_CP1_CI_AS, zoneRedundant: false }
+  azure_sql_managed_instances:
+    sqlmi-analytics:
+      resource_group: rg-data-platform
+      sku: GP_Gen5
+      properties:
+        vCores: 4
+        storageSizeInGB: 32
+        licenseType: LicenseIncluded
+  azure_sql_virtual_machines:
+    sqlvm-analytics:
+      resource_group: rg-data-platform
+      properties:
+        sqlServerLicenseType: PAYG
+        sqlManagement: Full
+  azure_postgresql:
+    pg-analytics:
+      resource_group: rg-data-platform
+      sku: Standard_D2s_v3
+      properties:
+        storage: { storageSizeGB: 32 }
+        highAvailability: { mode: Disabled }
+        authConfig: { activeDirectoryAuth: Enabled, passwordAuth: Disabled }
+  azure_mysql:
+    mysql-analytics:
+      resource_group: rg-data-platform
+      sku: Standard_D2ds_v4
+      properties:
+        storage: { storageSizeGB: 32 }
+        highAvailability: { mode: Disabled }
+  azure_mariadb:
+    mariadb-analytics:
+      resource_group: rg-data-platform
+      sku: GP_Gen5_2
+      properties:
+        sslEnforcement: Enabled
+        minimalTlsVersion: TLS1_2
+  azure_cosmosdb_accounts:
+    cosmos-analytics:
+      resource_group: rg-data-platform
+      kind: GlobalDocumentDB
+      properties:
+        databaseAccountOfferType: Standard
+        disableLocalAuth: true
+        publicNetworkAccess: Enabled
+        consistencyPolicy: { defaultConsistencyLevel: Session }
+        locations:
+          - locationName: eastus
+            failoverPriority: 0
+  azure_redis_cache:
+    redis-analytics:
+      resource_group: rg-data-platform
+      properties:
+        sku: { name: Standard, family: C, capacity: 1 }
+        enableNonSslPort: false
+  azure_data_box:
+    databox-analytics-job:
+      resource_group: rg-data-platform
+      sku: DataBox
+      properties: { transferType: ImportToAzure }
+
+  # --- Governance / security / AI ---
+  # Microsoft Purview account. The generated template cannot set identity or
+  # sku.capacity; the data-plane (collections, scans, classifications, label
+  # policies) is NOT ARM — see README.md "Purview scope".
+  azure_purview_accounts:
+    purview-analytics:
+      resource_group: rg-governance
+      properties:
+        publicNetworkAccess: Disabled
+        managedResourcesPublicNetworkAccess: Disabled
+        managedEventHubState: Enabled
+        managedResourceGroupName: rg-purview-analytics-managed
+      tags: { env: "${var.environment}", workload: governance, data-owner: data-platform-team }
+  azure_key_vaults:
+    kv-governance:
+      resource_group: rg-governance
+      properties:
+        sku: { family: A, name: standard }
+        tenantId: "${var.tenant_id}"
+        enableRbacAuthorization: true
+        enableSoftDelete: true
+        softDeleteRetentionInDays: 90
+        enablePurgeProtection: true
+        publicNetworkAccess: Disabled
+        networkAcls: { defaultAction: Deny, bypass: AzureServices }
+  azure_policy_assignments:
+    require-data-owner-tag:
+      resource_group: rg-data-platform
+      properties:
+        displayName: "Require a data-owner tag on resources"
+        policyDefinitionId: "/providers/Microsoft.Authorization/policyDefinitions/871b6d14-10aa-478d-b590-94f262ecfa99"
+        enforcementMode: DoNotEnforce
+        parameters:
+          tagName: { value: data-owner }
+  azure_defender_plans:                    # subscription-scoped in ARM: see the policy-baseline.bicep deployment
+    VirtualMachines:
+      resource_group: rg-governance
+      properties: { pricingTier: Standard, subPlan: P2 }
+  azure_machine_learning_workspaces:
+    mlw-analytics:
+      resource_group: rg-ai
+      kind: Default
+      properties:
+        friendlyName: "Analytics ML workspace"
+        publicNetworkAccess: Disabled
+  azure_ai_foundry:
+    foundry-hub:
+      resource_group: rg-ai
+      kind: Hub
+      properties:
+        friendlyName: "Analytics AI Foundry hub"
+        publicNetworkAccess: Disabled
+    foundry-project:
+      resource_group: rg-ai
+      kind: Project
+      properties:
+        friendlyName: "Analytics AI Foundry project"
+  azure_sentinel:                          # extension resource on a Log Analytics workspace
+    sentinel-onboard:
+      resource_group: rg-observability
+  azure_video_indexer:
+    vi-analytics:
+      resource_group: rg-ai
+  azure_openai:
+    aoai-analytics:
+      subscription: "${var.subscription_id}"
+      resource_group: rg-ai
+      location: eastus2                    # per-resource location override
+      kind: OpenAI
+      sku: S0
+      properties:
+        customSubDomainName: aoai-analytics-default
+        publicNetworkAccess: Enabled
+        disableLocalAuth: true
+      tags: { env: "${var.environment}", workload: ai }
+  azure_load_testing:
+    lt-analytics:
+      resource_group: rg-observability
+      properties: { description: "Load tests for the analytics APIs" }
+  azure_agent_ids:                         # user-assigned managed identity
+    agent-ingest:
+      resource_group: rg-ai
+  azure_service_groups:                    # tenant-level construct (preview API)
+    sg-platform:
+      resource_group: rg-governance
+
+  # --- Monitoring / observability ---
+  azure_log_analytics_workspaces:
+    law-analytics:
+      resource_group: rg-observability
+      properties:
+        sku: { name: PerGB2018 }
+        retentionInDays: 90
+        publicNetworkAccessForIngestion: Enabled
+        publicNetworkAccessForQuery: Enabled
+  azure_monitor_components:
+    appi-analytics:
+      resource_group: rg-observability
+      kind: web
+      properties:
+        Application_Type: web
+        Flow_Type: Bluefield
+        IngestionMode: LogAnalytics
+        RetentionInDays: 90
+        WorkspaceResourceId: "/subscriptions/${var.subscription_id}/resourceGroups/rg-observability/providers/Microsoft.OperationalInsights/workspaces/law-analytics"
+  azure_alerts:
+    alert-high-cpu:
+      resource_group: rg-observability
+      location: global
+      properties:
+        description: "CPU above 80% for 15 minutes"
+        severity: 2
+        enabled: true
+        scopes: ["/subscriptions/${var.subscription_id}/resourceGroups/rg-data-platform"]
+        evaluationFrequency: PT5M
+        windowSize: PT15M
+        criteria:
+          "odata.type": Microsoft.Azure.Monitor.MultipleResourceMultipleMetricCriteria
+          allOf:
+            - name: HighCpu
+              metricName: Percentage CPU
+              metricNamespace: Microsoft.Compute/virtualMachines
+              operator: GreaterThan
+              threshold: 80
+              timeAggregation: Average
+              criterionType: StaticThresholdCriterion
+  azure_diagnostic_settings:               # extension resource: needs a target scope
+    diag-purview:
+      resource_group: rg-governance
+      properties:
+        workspaceId: "/subscriptions/${var.subscription_id}/resourceGroups/rg-observability/providers/Microsoft.OperationalInsights/workspaces/law-analytics"
+        logs:
+          - categoryGroup: allLogs
+            enabled: true
+        metrics:
+          - category: AllMetrics
+            enabled: true
+  azure_metrics:                           # data collection rule
+    dcr-metrics:
+      resource_group: rg-observability
+      kind: Linux
+      properties: { description: "Platform metrics collection" }
+  azure_workbooks:                         # the name must be a GUID
+    "6f1d5c2e-3b7a-4c9e-8d21-5a9b7c4e1f30":
+      resource_group: rg-observability
+      kind: shared
+      properties:
+        displayName: "Data platform overview"
+        category: workbook
+        serializedData: '{"version":"Notebook/1.0","items":[]}'
+        sourceId: Azure Monitor
+  azure_activity_logs:                     # subscription-scope diagnostic setting
+    activity-export:
+      resource_group: rg-observability
+      properties:
+        workspaceId: "/subscriptions/${var.subscription_id}/resourceGroups/rg-observability/providers/Microsoft.OperationalInsights/workspaces/law-analytics"
+        logs:
+          - category: Administrative
+            enabled: true
+  azure_database_watchers:
+    dbwatcher-sql:
+      resource_group: rg-observability
+
+  # --- Networking ---
+  azure_network_watchers:
+    nw-eastus:
+      resource_group: rg-networking
+  azure_dns_zones:
+    contoso.example.com:
+      resource_group: rg-networking
+      location: global
+      properties: { zoneType: Public }
+  azure_private_dns_zones:                 # zones needed for Purview / storage / Key Vault private endpoints
+    privatelink.purview.azure.com:
+      resource_group: rg-networking
+      location: global
+    privatelink.purviewstudio.azure.com:
+      resource_group: rg-networking
+      location: global
+    privatelink.blob.core.windows.net:
+      resource_group: rg-networking
+      location: global
+    privatelink.queue.core.windows.net:
+      resource_group: rg-networking
+      location: global
+    privatelink.servicebus.windows.net:
+      resource_group: rg-networking
+      location: global
+    privatelink.vaultcore.azure.net:
+      resource_group: rg-networking
+      location: global
+  azure_network_interfaces:
+    nic-app01:
+      resource_group: rg-networking
+      properties:
+        ipConfigurations:
+          - name: ipconfig1
+            properties:
+              privateIPAllocationMethod: Dynamic
+  azure_public_ip_addresses:
+    pip-agw:
+      resource_group: rg-networking
+      sku: Standard
+      properties: { publicIPAllocationMethod: Static, publicIPAddressVersion: IPv4 }
+  azure_route_tables:
+    rt-spoke:
+      resource_group: rg-networking
+      properties: { disableBgpRoutePropagation: true }
+  azure_virtual_networks:
+    vnet-hub:
+      resource_group: rg-networking
+      properties:
+        addressSpace: { addressPrefixes: ["10.0.0.0/16"] }
+        subnets:
+          - name: snet-private-endpoints
+            properties: { addressPrefix: "10.0.1.0/24" }
+          - name: snet-data
+            properties: { addressPrefix: "10.0.2.0/24" }
+  azure_local_network_gateways:
+    lng-onprem:
+      resource_group: rg-networking
+      properties:
+        gatewayIpAddress: "203.0.113.10"
+        localNetworkAddressSpace: { addressPrefixes: ["192.168.0.0/24"] }
+  azure_peering_services:
+    peersvc-isp:
+      resource_group: rg-networking
+  azure_peerings:
+    peer-isp:
+      resource_group: rg-networking
+  azure_virtual_network_gateways:
+    vng-hub:
+      resource_group: rg-networking
+      properties: { gatewayType: Vpn, vpnType: RouteBased }
+  azure_virtual_wans:
+    vwan-global:
+      resource_group: rg-networking
+      properties: { type: Standard, allowBranchToBranchTraffic: true }
+  azure_ddos_protection_plans:
+    ddos-hub:
+      resource_group: rg-networking
+  azure_firewalls:
+    afw-hub:
+      resource_group: rg-networking
+      properties:
+        sku: { name: AZFW_VNet, tier: Standard }
+        threatIntelMode: Alert
+  azure_ip_groups:
+    ipg-trusted:
+      resource_group: rg-networking
+      properties: { ipAddresses: ["10.0.0.0/8"] }
+  azure_network_security_groups:
+    nsg-app:
+      resource_group: rg-networking
+      properties:
+        securityRules:
+          - name: deny-inbound-internet
+            properties:
+              priority: 4000
+              direction: Inbound
+              access: Deny
+              protocol: "*"
+              sourceAddressPrefix: Internet
+              sourcePortRange: "*"
+              destinationAddressPrefix: "*"
+              destinationPortRange: "*"
+  azure_application_gateways:
+    agw-web:
+      resource_group: rg-networking
+  azure_application_security_groups:
+    asg-web:
+      resource_group: rg-networking
+
+# -----------------------------------------------------------------------------
+# security — workspace roles (+ OneLake data access roles). One principal per role.
+# -----------------------------------------------------------------------------
+security:
+  roles:
+    - name: platform-admins
+      entra_group: sg-fabric-admins
+      workspace_role: admin
+    - name: data-engineers
+      entra_group: sg-data-engineers
+      workspace_role: contributor
+      onelake_roles:
+        - tables: [sales, customers]
+          folders: ["/Files/raw"]
+          permissions: [readwrite]
+    - name: analytics-engineers
+      entra_group: sg-fabric-creators
+      workspace_role: member
+    - name: analysts
+      entra_group: sg-data-analysts
+      workspace_role: viewer
+      onelake_roles:
+        - tables: ["*"]
+          permissions: [read]
+    - name: data-scientists
+      entra_group: sg-data-scientists
+      workspace_role: contributor
+      onelake_roles:
+        - tables: [sales]
+          permissions: [read, write]
+        - folders: ["/Files/models"]
+          permissions: [write]
+    - name: ci-cd-deployer
+      service_principal: app-udp-deploy
+      workspace_role: admin
+    - name: purview-scanner
+      service_principal: app-purview-scanner
+      workspace_role: viewer
+    - name: workspace-owner
+      entra_user: "${var.workspace_owner_upn}"
+      workspace_role: admin
+
+# -----------------------------------------------------------------------------
+# connections — data-source connections (secrets via ${secret.*} / ${keyvault.*.*}
+# or connection_string_var; never inline). Types: adls_gen2 | sql_server |
+# azure_sql | cosmos_db | kusto | http | custom
+# -----------------------------------------------------------------------------
+connections:
+  adls_source:
+    type: adls_gen2
+    endpoint: "https://stdatalakedev01.dfs.core.windows.net"
+    auth_method: managed_identity
+  sql_source:
+    type: sql_server
+    endpoint: "sql-onprem.contoso.com"
+    database: salesdb
+    auth_method: service_principal
+    connection_string_var: UDP_SQL_SOURCE_CONNECTION_STRING
+  azure_sql_source:
+    type: azure_sql
+    endpoint: "sql-analytics-server.database.windows.net"
+    database: sqldb-analytics
+    auth_method: service_principal
+  cosmos_source:
+    type: cosmos_db
+    endpoint: "https://cosmos-analytics.documents.azure.com:443/"
+    database: telemetry
+    auth_method: key
+    connection_string_var: UDP_COSMOS_CONNECTION_STRING
+  kusto_source:
+    type: kusto
+    endpoint: "https://telemetry.eastus.kusto.windows.net"
+    database: telemetry
+    auth_method: managed_identity
+  api_source:
+    type: http
+    endpoint: "https://api.contoso.com/v2"
+    properties:
+      api_version: "2024-01-01"
+      timeout: "30"
+      api_key: "${secret.CONTOSO_API_KEY}"
+  snowflake_conn:
+    type: custom
+    endpoint: "contoso-analytics.snowflakecomputing.com"
+    properties:
+      warehouse: ANALYTICS_WH
+      role: UDP_READER
+      password: "${keyvault.kv-governance.snowflake-password}"
+  databricks_conn:
+    type: custom
+    endpoint: "adb-1234567890123456.7.azuredatabricks.net"
+    auth_method: service_principal
+    properties:
+      catalog: main
+
+# -----------------------------------------------------------------------------
+# policies — enforced by `validate` and `deploy`
+# -----------------------------------------------------------------------------
+policies:
+  # NOTE: require_description and naming_convention apply to EVERY resource key,
+  # including Azure and Entra names (hyphens, dots, no description field). They
+  # are therefore left off here; enable them in Fabric-only deployments:
+  #   require_description: true
+  #   naming_convention: snake_case
+  max_notebook_size_kb: 500
+  blocked_libraries:
+    - tensorflow
+    - boto3
+  # Accepted by the schema; not yet evaluated by the engine.
+  rules:
+    - name: max-resources
+      check: max_resources
+      value: 200
+      severity: warning
+    - name: require-environment
+      check: require_environment
+      severity: error
+
+# -----------------------------------------------------------------------------
+# notifications — webhooks after deploy (types: slack | teams)
+# Placeholders: {deployment.name} {deployment.version} {target}
+# -----------------------------------------------------------------------------
+notifications:
+  on_success:
+    - type: slack
+      webhook: "${secret.UDP_SLACK_WEBHOOK}"
+      message: "Deployed {deployment.name} v{deployment.version} to {target}"
+    - type: teams
+      webhook: "${secret.UDP_TEAMS_WEBHOOK}"
+  on_failure:
+    - type: slack
+      webhook: "${secret.UDP_SLACK_ALERTS_WEBHOOK}"
+      message: "FAILED: {deployment.name} v{deployment.version} deployment to {target}"
+    - type: teams
+      webhook: "${secret.UDP_TEAMS_ALERTS_WEBHOOK}"
+
+# -----------------------------------------------------------------------------
+# state — where deployment state lives. local | azureblob | onelake | adls
+# (the remote backends are beta; use one for team/CI deployments)
+# -----------------------------------------------------------------------------
+state:
+  backend: local
+  # backend: azureblob
+  # config:
+  #   account_name: "stdataplatformdev01"
+  #   container_name: "udpi30-state"      # default: udpi30-state
+  #   prefix: "default-complete"            # optional key prefix
+  #   # account_key: omit so DefaultAzureCredential is used
+  # backend: onelake
+  # config:
+  #   workspace_id: "<workspace-guid>"
+  #   lakehouse_id: "<lakehouse-guid>"
+  #   path: ".udpi30-state"               # default: .udpi30-state
+  # backend: adls
+  # config:
+  #   account_name: "stadlsanalytics01"
+  #   filesystem: "udpi30-state"          # default: udpi30-state
+  #   prefix: "default-complete"
+
+# -----------------------------------------------------------------------------
+# admin — TENANT-WIDE Fabric settings (Fabric Admin API). NEVER applied by
+# `deploy`; only by `udpi30 admin apply`. Keys are API `settingName`s (not
+# portal titles). All settings the tenant exposes are listed, grouped like the
+# Admin portal; each one carries its portal title as a comment.
+#
+# Posture of this baseline (an EXAMPLE — review every line before applying):
+#   * external sharing, publish-to-web, template apps, SAS tokens: off / restricted
+#   * item creation and previews: scoped to the creators group
+#   * Copilot / AI: scoped to the AI group, cross-region data movement off
+#   * Purview / information protection: labels on, inheritance on, AI interaction
+#     security on, protected-label link sharing blocked
+#   * Admin APIs and service principals: scoped to the automation group (this is
+#     what lets a Purview scanner service principal read Fabric / Power BI metadata)
+#   * Private Link allowed, but public access NOT blocked (enabling the block
+#     before your private network is ready can lock everyone out)
+#
+# delegate_to_* are declared only where the API exposes the flag for a setting.
+# Security groups are declared only for settings that accept them.
+# -----------------------------------------------------------------------------
+admin:
+  tenant_settings:
+    # === Additional workloads ===
+    # Capacity admins and contributors can add and remove additional workloads
+    FabricAddPartnerWorkload:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_admins_group_id}"
+          name: "Fabric Administrators"
+      properties:
+        - name: "OnlyCapacityAdmins"
+          value: "true"
+          type: Boolean
+    # Workspace admins can add and remove additional workloads (preview)
+    FabricAddWorkloadToWorkspace:
+      enabled: false
+    # Workspace admins can develop partner workloads
+    FabricThirdPartyWorkloads:
+      enabled: false
+    # Users can see and work with additional workloads not validated by Microsoft
+    ThirdPartyPrivateWorkloads:
+      enabled: false
+
+    # === Admin API settings ===
+    # Enhance admin APIs responses with detailed metadata
+    AdminApisIncludeDetailedMetadata:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_automation_group_id}"
+          name: "Fabric Automation"
+    # Enhance admin APIs responses with DAX and mashup expressions
+    AdminApisIncludeExpressions:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_automation_group_id}"
+          name: "Fabric Automation"
+    # Service principals can access read-only admin APIs
+    AllowServicePrincipalsUseReadAdminAPIs:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_automation_group_id}"
+          name: "Fabric Automation"
+    # Service principals can access admin APIs used for updates
+    AllowServicePrincipalsUseWriteAdminAPIs:
+      enabled: false
+
+    # === Advanced networking ===
+    # Tenant-level Private Link
+    AllowAccessOverPrivateLinks:
+      enabled: true
+    # Block Public Internet Access
+    BlockAccessFromPublicNetworks:
+      enabled: false
+    # Configure workspace-level IP firewall rules and trusted resource instances
+    ConfigureWorkspaceLevelIPFirewallRules:
+      enabled: true
+    # Configure workspace-level inbound network rules
+    WorkspaceBlockInboundAccess:
+      enabled: true
+    # Configure workspace-level outbound network rules
+    WorkspaceBlockOutboundAccess:
+      enabled: true
+
+    # === App settings ===
+    # Push apps to end users
+    AppPush:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+    # Publish apps to the entire organization
+    PublishContentPack:
+      enabled: false
+    # Create template organizational apps
+    TemplatePublish:
+      enabled: false
+
+    # === Audit and usage settings ===
+    # Show user data in the Fabric Capacity Metrics app and reports
+    AllowCapacityMetricsReportUserMask:
+      enabled: false
+    # Microsoft can store query text to aid in support investigations
+    ASCollectQueryTextTelemetryTenantSwitch:
+      enabled: false
+    # Azure Log Analytics connections for workspace administrators
+    LogAnalyticsAttachForWorkspaceAdmins:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_admins_group_id}"
+          name: "Fabric Administrators"
+    # Workspace admins can turn on monitoring for their workspaces (preview)
+    PlatformMonitoringTenantSetting:
+      enabled: true
+      delegate_to_capacity: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_admins_group_id}"
+          name: "Fabric Administrators"
+    # Usage metrics for content creators
+    UsageMetrics:
+      enabled: true
+    # Per-user data in usage metrics for content creators
+    UsageMetricsTrackUserLevelInfo:
+      enabled: false
+
+    # === Azure AI Service ===
+    # Allow data processing outside geographic region for Azure AI services
+    AllowUserDataProcessedByAiServicesOutOfGeo:
+      enabled: false
+      delegate_to_capacity: false
+
+    # === Azure Maps services ===
+    # Users can use Azure Maps services
+    AzureMapsInFabric:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+    # Data sent to Azure Maps can be processed outside your capacity's geographic region, compliance boundary or national cloud instance
+    AzureMapsInFabricCrossRegionDataProcessing:
+      enabled: false
+    # Users can use Azure Maps Weather Services (Preview)
+    AzureMapsWeatherServices:
+      enabled: false
+
+    # === Copilot and AI ===
+    # Data sent to Azure OpenAI can be processed outside your capacity's geographic region, compliance boundary, or national cloud instance
+    AllowSendAOAIDataToOtherRegions:
+      enabled: false
+      delegate_to_capacity: false
+    # Data sent to OpenAI as a Microsoft Subprocessor can be processed outside your capacity's geographic region, compliance boundary, or national cloud instance
+    AllowSendOpenAISubprocessorDataToOtherRegions:
+      enabled: false
+      delegate_to_capacity: false
+    # Data sent to Azure OpenAI can be stored outside your capacity's geographic region, compliance boundary, or national cloud instance
+    AllowStoreAOAIDataInOtherRegions:
+      enabled: false
+    # Capacities can be designated as Fabric Copilot capacities
+    CopilotCapacitySetupPermissionSwitch:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_admins_group_id}"
+          name: "Fabric Administrators"
+    # Users can use Copilot, AI Agents and other AI experiences powered by Azure OpenAI
+    EnableAOAI:
+      enabled: true
+      delegate_to_capacity: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_ai_users_group_id}"
+          name: "Fabric AI Users"
+    # Users can use Copilot, AI Agents and other AI experiences powered by OpenAI as a Microsoft Subprocessor
+    EnableOpenAISubprocessor:
+      enabled: false
+      delegate_to_capacity: false
+    # Users can access a standalone, cross-item Power BI Copilot experience (preview)
+    ImmersiveTenantAdminSwitch:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_ai_users_group_id}"
+          name: "Fabric AI Users"
+    # Only show approved items in the standalone Copilot in Power BI experience (preview)
+    PreppedForCopilotContentDiscovery:
+      enabled: true
+      delegate_to_domain: true
+      delegate_to_workspace: true
+
+    # === Dashboard settings ===
+    # Web content on dashboard tiles
+    WebContentTilesTenant:
+      enabled: false
+
+    # === Datamart settings ===
+    # Create Datamarts (preview)
+    DatamartTenant:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+
+    # === Developer settings ===
+    # Allow service principals to create and use profiles
+    AllowServicePrincipalsCreateAndUseProfiles:
+      enabled: false
+    # Block ResourceKey Authentication
+    BlockResourceKeyAuthentication:
+      enabled: true
+    # Define maximum number of Fabric identities in a tenant
+    ConfigureFabricIdentityTenantLimit:
+      enabled: true
+      properties:
+        - name: "FabricIdentityTenantLimit"
+          value: "100"
+          type: Integer
+    # Embed content in apps
+    Embedding:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+    # Service principals can create workspaces, connections, and deployment pipelines
+    ServicePrincipalAccessGlobalAPIs:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_automation_group_id}"
+          name: "Fabric Automation"
+    # Service principals can call Fabric public APIs
+    ServicePrincipalAccessPermissionAPIs:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_automation_group_id}"
+          name: "Fabric Automation"
+
+    # === Discovery settings ===
+    # Discover content
+    DiscoverDatasetsConsumption:
+      enabled: true
+    # Make certified content discoverable
+    DiscoverDatasetsSettingsCertified:
+      enabled: true
+    # Make promoted content discoverable
+    DiscoverDatasetsSettingsPromoted:
+      enabled: true
+    # Users can find objects in search
+    OneLakeCatalogSubItemDiscovery:
+      enabled: true
+
+    # === Domain management settings ===
+    # Allow tenant and domain admins to override workspace assignments (preview)
+    EnableReassignDataDomainSwitch:
+      enabled: true
+
+    # === Encryption ===
+    # Allow cross-tenant customer-managed keys
+    CMKForWorkspace_CrossTenantValidationBypass:
+      enabled: false
+    # Apply customer-managed keys
+    WorkspaceCmk:
+      enabled: true
+
+    # === Explore settings (preview) ===
+    # Users with view permission can launch Explore
+    AdminDataExploreViewPermission:
+      enabled: false
+
+    # === Export and sharing settings ===
+    # Endorse master data
+    AllowEndorsementMasterDataSwitch:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_governance_group_id}"
+          name: "Fabric Governance"
+    # Users can accept external data shares
+    AllowExternalDataSharingReceiverSwitch:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_external_sharing_group_id}"
+          name: "Fabric External Sharing"
+      excluded_security_groups:
+        - graph_id: "${var.fabric_contractors_group_id}"
+          name: "Fabric Contractors"
+    # External data sharing
+    AllowExternalDataSharingSwitch:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_external_sharing_group_id}"
+          name: "Fabric External Sharing"
+      excluded_security_groups:
+        - graph_id: "${var.fabric_contractors_group_id}"
+          name: "Fabric Contractors"
+    # Users can see guest users in lists of suggested people
+    AllowGuestLookup:
+      enabled: false
+    # Guest users can access Microsoft Fabric
+    AllowGuestUserToAccessSharedContent:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_external_sharing_group_id}"
+          name: "Fabric External Sharing"
+      excluded_security_groups:
+        - graph_id: "${var.fabric_contractors_group_id}"
+          name: "Fabric Contractors"
+    # Users with read or write permission can download data from notebooks
+    AllowNotebookDataExport:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+    # Allow DirectQuery connections to Power BI semantic models
+    AllowPowerBIASDQOnTenant:
+      enabled: true
+    # Install Power BI app for Microsoft Teams automatically
+    AutoInstallPowerBIAppInTeamsTenant:
+      enabled: false
+    # Certification
+    CertifyDatasets:
+      enabled: true
+      delegate_to_domain: false
+      enabled_security_groups:
+        - graph_id: "${var.fabric_governance_group_id}"
+          name: "Fabric Governance"
+      properties:
+        - name: "CertificationDocumentationUrl"
+          value: "https://contoso.com/governance/certification"
+          type: Url
+    # Guest users can browse and access Fabric content
+    ElevatedGuestsTenant:
+      enabled: false
+    # B2B guest users can set up and be subscribed to email subscriptions
+    EmailSubscriptionsToB2BUsers:
+      enabled: false
+    # Users can send email subscriptions to external users
+    EmailSubscriptionsToExternalUsers:
+      enabled: false
+    # Users can set up email subscriptions
+    EmailSubscriptionTenant:
+      enabled: true
+    # Allow specific users to turn on external data sharing
+    EnableDatasetInPlaceSharing:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_external_sharing_group_id}"
+          name: "Fabric External Sharing"
+      excluded_security_groups:
+        - graph_id: "${var.fabric_contractors_group_id}"
+          name: "Fabric Contractors"
+    # Download reports
+    ExportReport:
+      enabled: true
+      excluded_security_groups:
+        - graph_id: "${var.fabric_contractors_group_id}"
+          name: "Fabric Contractors"
+    # Export to .csv
+    ExportToCsv:
+      enabled: true
+      excluded_security_groups:
+        - graph_id: "${var.fabric_contractors_group_id}"
+          name: "Fabric Contractors"
+    # Export to Excel
+    ExportToExcelSetting:
+      enabled: true
+      excluded_security_groups:
+        - graph_id: "${var.fabric_contractors_group_id}"
+          name: "Fabric Contractors"
+    # Export reports as image files
+    ExportToImage:
+      enabled: true
+      delegate_to_domain: false
+      delegate_to_workspace: false
+    # Export reports as MHTML documents
+    ExportToMHTML:
+      enabled: false
+      delegate_to_domain: false
+      delegate_to_workspace: false
+    # Export reports as PowerPoint presentations or PDF documents
+    ExportToPowerPoint:
+      enabled: true
+      delegate_to_domain: false
+      delegate_to_workspace: false
+    # Export reports as Word documents
+    ExportToWord:
+      enabled: true
+      delegate_to_domain: false
+      delegate_to_workspace: false
+    # Export reports as XML documents
+    ExportToXML:
+      enabled: false
+      delegate_to_domain: false
+      delegate_to_workspace: false
+    # Copy and paste visuals
+    ExportVisualImageTenant:
+      enabled: true
+    # Guest users can work with shared semantic models in their own tenants
+    ExternalDatasetSharingTenant:
+      enabled: false
+    # Users can invite guest users to collaborate through item sharing and permissions
+    ExternalSharingV2:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_external_sharing_group_id}"
+          name: "Fabric External Sharing"
+      excluded_security_groups:
+        - graph_id: "${var.fabric_contractors_group_id}"
+          name: "Fabric Contractors"
+    # Users can work with semantic models in Excel using a live connection
+    LiveConnection:
+      enabled: true
+    # Users can share Power BI visuals as Loop components (preview)
+    LoopIntegration:
+      enabled: false
+    # Print dashboards and reports
+    Printing:
+      enabled: true
+    # Featured content
+    PromoteContent:
+      enabled: true
+    # Publish to web
+    PublishToWeb:
+      enabled: false
+      properties:
+        - name: "CreateP2w"
+          value: "false"
+          type: Boolean
+    # Allow shareable links to grant access to everyone in your organization
+    ShareLinkToEntireOrg:
+      enabled: false
+    # Enable Microsoft Teams integration
+    ShareToTeamsTenant:
+      enabled: true
+    # Enable Power BI add-in for PowerPoint
+    StorytellingTenant:
+      enabled: false
+
+    # === Gen1 dataflow settings ===
+    # Create and use Gen1 dataflows
+    CDSAManagement:
+      enabled: false
+
+    # === Git integration ===
+    # Users can sync workspace items with GitHub repositories
+    GitHubTenantSettings:
+      enabled: true
+      delegate_to_capacity: false
+      delegate_to_workspace: false
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+    # Users can export items to Git repositories in other geographical locations
+    GitIntegrationCrossGeoTenantSwitch:
+      enabled: false
+      delegate_to_capacity: false
+      delegate_to_workspace: false
+    # Users can export workspace items with applied sensitivity labels to Git repositories
+    GitIntegrationSensitivityLabelsTenantSwitch:
+      enabled: false
+      delegate_to_capacity: false
+      delegate_to_workspace: false
+    # Users can synchronize workspace items with their Git repositories
+    GitIntegrationTenantSwitch:
+      enabled: true
+      delegate_to_capacity: false
+      delegate_to_workspace: false
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+
+    # === Help and support settings ===
+    # Show a custom message before publishing reports
+    AdminCustomDisclaimer:
+      enabled: true
+      properties:
+        - name: "AdminCustomDisclaimer"
+          value: "Confirm this content is approved for its intended audience and matches its sensitivity label."
+          type: FreeText
+    # Users can try Microsoft Fabric paid features
+    AllowFreeTrial:
+      enabled: false
+    # Receive email and Teams notifications for service outages or incidents
+    EmailSecurityGroupsOnOutage:
+      enabled: true
+      properties:
+        - name: "EmailList"
+          value: "${var.outage_notification_group_id}"
+          type: MailEnabledSecurityGroup
+    # Receive In-product notifications for service outages or incidents
+    InProductOutageNotification:
+      enabled: true
+      delegate_to_capacity: false
+      delegate_to_workspace: false
+    # Publish "Get Help" information
+    TenantSettingPublishGetHelpInfo:
+      enabled: true
+      properties:
+        - name: "TrainingDocumentation"
+          value: "https://contoso.com/fabric/training"
+          type: Url
+        - name: "DiscussionForum"
+          value: "https://contoso.com/fabric/community"
+          type: Url
+        - name: "LicensingRequests"
+          value: "https://contoso.com/fabric/licensing"
+          type: Url
+        - name: "HelpDesk"
+          value: "https://contoso.com/fabric/help"
+          type: Url
+
+    # === Information protection ===
+    # Restrict content with protected labels from being shared via link with everyone in your organization
+    BlockProtectedLabelSharingToEntireOrg:
+      enabled: true
+    # Allow Microsoft Purview to secure AI interactions
+    DataSecurityForAIInteractions:
+      enabled: true
+    # Apply sensitivity labels from data sources to their data in Power BI
+    EimInformationProtectionDataSourceInheritanceSetting:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_governance_group_id}"
+          name: "Fabric Governance"
+    # Domain admins can set default sensitivity labels for their domains (preview)
+    EimInformationProtectionDefaultLabelDomainSetting:
+      enabled: true
+    # Automatically apply sensitivity labels to downstream content
+    EimInformationProtectionDownstreamInheritanceSetting:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_governance_group_id}"
+          name: "Fabric Governance"
+    # Allow users to apply sensitivity labels for content
+    EimInformationProtectionEdit:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+        - graph_id: "${var.fabric_governance_group_id}"
+          name: "Fabric Governance"
+    # Allow workspace admins to override automatically applied sensitivity labels
+    EimInformationProtectionWorkspaceAdminsOverrideAutomaticLabelsSetting:
+      enabled: false
+
+    # === Insights settings ===
+    # Show entry points for insights (preview)
+    AutomatedInsightsEntryPoints:
+      enabled: true
+    # Receive notifications for top insights (preview)
+    AutomatedInsightsTenant:
+      enabled: false
+
+    # === Integration settings ===
+    # Microsoft Entra single sign-on for on-premises data gateway
+    AADSSOForGateway:
+      enabled: true
+    # Microsoft Entra single sign-on for virtual network (VNet) data gateway
+    AADSSOForVnetGateway:
+      enabled: true
+    # Allow non-Entra ID auth in Eventstream
+    AllowNonEntraADAuthInEventStream:
+      enabled: false
+    # Use global search for Power BI
+    ArtifactSearchTenant:
+      enabled: true
+    # Enable granular access control for all data connections
+    ASShareableCloudConnectionBindingSecurityModeTenant:
+      enabled: true
+    # Semantic models can export data to OneLake
+    ASWritethruContinuousExportTenantSwitch:
+      enabled: true
+    # Users can use the Azure Maps visual
+    AzureMaps:
+      enabled: true
+    # Data sent to Azure Maps can be processed outside your tenant's geographic region, compliance boundary, or national cloud instance
+    AzureMapsCrossRegionDataProcessing:
+      enabled: false
+    # Data sent to Azure Maps can be processed by Microsoft Online Services Subprocessors
+    AzureMapsThirdPartyDataProcessing:
+      enabled: false
+    # Map and filled map visuals
+    BingMap:
+      enabled: false
+    # Semantic Model Execute Queries REST API
+    DatasetExecuteQueries:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+    # Enable Denodo SSO
+    DenodoForPowerBISSO:
+      enabled: false
+    # Dremio SSO
+    DremioSSO:
+      enabled: false
+    # ArcGIS GeoAnalytics for Fabric Runtime
+    EnableEsriLibraries:
+      enabled: true
+      delegate_to_capacity: true
+    # Use ArcGIS Maps for Power BI
+    EsriVisual:
+      enabled: false
+    # Google BigQuery SSO
+    GoogleBigQuerySSO:
+      enabled: false
+    # Semantic model owners can choose to automatically update semantic models from files imported from OneDrive or SharePoint
+    ODSPRefreshEnforcementTenantAllowAutomaticUpdate:
+      enabled: true
+    # Users can share links to Power BI files stored in OneDrive and SharePoint through Power BI Desktop (preview)
+    OneDriveSharePointAllowSharingTenantSetting:
+      enabled: true
+    # Users can view Power BI files saved in OneDrive and SharePoint (preview)
+    OneDriveSharePointViewerIntegrationTenantSettingV2:
+      enabled: true
+    # Allow XMLA endpoints and Analyze in Excel with on-premises semantic models
+    OnPremAnalyzeInExcel:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+    # Users can use the Power BI Model Context Protocol server endpoints (preview)
+    PowerBIMCP:
+      enabled: false
+    # Redshift SSO
+    RedshiftSSO:
+      enabled: false
+    # Snowflake SSO
+    SnowflakeSSO:
+      enabled: true
+    # Enable Starburst SSO
+    StarburstAadSSO:
+      enabled: false
+    # Users can connect to data sources by using Apache Arrow database connectivity (ADBC)
+    UseAdbcByDefault:
+      enabled: true
+      delegate_to_workspace: true
+    # Integration with SharePoint and Microsoft Lists
+    VisualizeListInPowerBI:
+      enabled: false
+
+    # === Kusto settings ===
+    # Allow Real-Time Dashboards to include embedded app visuals
+    RealTimeDashboardEmbeddedApp:
+      enabled: false
+
+    # === Microsoft Fabric ===
+    # Enable sending Operations Agents observability data to Agent 365 (preview)
+    AllowA365Observability:
+      enabled: false
+      delegate_to_capacity: false
+    # Allow monitoring data collection
+    AllowMonitoringDataCollection:
+      enabled: true
+      delegate_to_capacity: false
+    # Insights for operations agents (preview)
+    AllowOperatorInsightsTenantSwitch:
+      enabled: true
+      delegate_to_capacity: false
+    # Enable Fabric App Items (preview)
+    AppBackendTenant:
+      enabled: false
+      delegate_to_capacity: false
+    # Users can create Azure Databricks Storage items (preview)
+    ArtifactDatabricksStoragePreview:
+      enabled: true
+      delegate_to_capacity: false
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+    # Users can create dbt job items (preview)
+    ArtifactDBTItemTenantSwitch:
+      enabled: true
+      delegate_to_capacity: false
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+    # Users can create deployment plan (preview) items
+    ArtifactDeploymentPlanPreview:
+      enabled: true
+      delegate_to_capacity: false
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+    # Enable new mirrored catalog items (preview)
+    ArtifactMirroredCatalogPreview:
+      enabled: true
+      delegate_to_capacity: false
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+    # Users can access the Database hub (preview)
+    DatabaseHubTenant:
+      enabled: true
+      delegate_to_capacity: false
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+    # Users can create Digital Twin Builder (preview) items
+    DigitalOperationsPreview:
+      enabled: true
+      delegate_to_capacity: false
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+    # Enable anonymous data access for Fabric Apps (Preview)
+    EnableAnonymousDataAccessForFabricApps:
+      enabled: false
+    # Enable Event Schema Sets in Real-Time Hub (preview)
+    EventDefinitionTenantSwitch:
+      enabled: true
+      delegate_to_capacity: false
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+    # Product Feedback
+    FabricFeedbackTenantSwitch:
+      enabled: true
+    # Users can create Fabric items
+    FabricGAWorkloads:
+      enabled: true
+      delegate_to_capacity: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+    # Users can be informed of upcoming conferences featuring Microsoft Fabric when they are logged in to Fabric
+    FabricPromotionTenantSwitch:
+      enabled: false
+    # Fabric data agents can send operational metadata for observability in Microsoft Foundry
+    MicrosoftFoundryTelemetry:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_ai_users_group_id}"
+          name: "Fabric AI Users"
+    # ML models can serve real-time predictions from API endpoints (preview)
+    MLModelEndpointsTenantSwitch:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+    # Users can create Monitoring items (preview)
+    MonitoringTenant:
+      enabled: true
+      delegate_to_capacity: false
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+    # Users can create Ontology (preview) items
+    OntologyPreview:
+      enabled: true
+      delegate_to_capacity: false
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+    # Policies (preview)
+    PolicySetTenantSwitch:
+      enabled: true
+      delegate_to_capacity: false
+      enabled_security_groups:
+        - graph_id: "${var.fabric_governance_group_id}"
+          name: "Fabric Governance"
+    # Detect anomalies in Real-Time Intelligence (Preview)
+    RTHAnomalyDetectionTenantSwitch:
+      enabled: true
+      delegate_to_capacity: false
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+    # All Power BI users can see "Set alert" button to create Fabric Activator alerts
+    ShowActivatorEntryPointsTenantSwitch:
+      enabled: true
+
+    # === OneLake settings ===
+    # Use short-lived user-delegated SAS tokens
+    AllowGetOneLakeUDK:
+      enabled: false
+    # Authenticate with OneLake user-delegated SAS tokens
+    AllowOneLakeUDK:
+      enabled: false
+      delegate_to_workspace: false
+    # Include end-user identifiers in OneLake diagnostic logs
+    OneLakeDiagnosticLogsEUII:
+      enabled: false
+    # Users can sync data in OneLake with the OneLake File Explorer app
+    OneLakeFileExplorer:
+      enabled: true
+    # Users can access data stored in OneLake with apps external to Fabric
+    OneLakeForThirdParty:
+      enabled: true
+
+    # === Power BI visuals ===
+    # AppSource Custom Visuals SSO
+    AllowCVAuthenticationTenant:
+      enabled: false
+    # Allow access to the browser's local storage
+    AllowCVLocalStorageV2Tenant:
+      enabled: false
+    # Allow downloads from custom visuals
+    AllowCVToExportDataToFileTenant:
+      enabled: false
+    # Add and use certified visuals only (block uncertified)
+    CertifiedCustomVisualsTenant:
+      enabled: true
+    # Allow visuals created using the Power BI SDK
+    CustomVisualsTenant:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+
+    # === Q&A settings ===
+    # Review questions
+    QnaFeedbackLoop:
+      enabled: false
+    # Synonym sharing
+    QnaLsdlSharing:
+      enabled: false
+
+    # === R and Python visuals settings ===
+    # Interact with and share R and Python visuals
+    RScriptVisual:
+      enabled: true
+
+    # === Scale-out settings ===
+    # Scale out queries for large semantic models
+    QueryScaleOutTenant:
+      enabled: true
+
+    # === Scorecards settings ===
+    # Create and use Scorecards
+    PowerBIGoalsTenant:
+      enabled: true
+
+    # === Semantic Model Security ===
+    # Block republish and disable package refresh
+    BlockAutoDiscoverAndPackageRefresh:
+      enabled: true
+
+    # === Semantic model settings ===
+    # Users can edit semantic models in the Power BI service
+    WebModelingTenantSwitch:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+
+    # === Share data with your Microsoft 365 services ===
+    # Share Fabric data with your Microsoft 365 services
+    M365DataSharing:
+      enabled: false
+      properties:
+        - name: "M365DataSharingAcrossGeos"
+          value: "false"
+          type: Boolean
+
+    # === Template app settings ===
+    # Publish template apps
+    DevelopServiceApps:
+      enabled: false
+    # Install template apps not listed in AppSource
+    InstallNonvalidatedTemplateApps:
+      enabled: false
+    # Install template apps
+    InstallServiceApps:
+      enabled: false
+
+    # === User experience experiments ===
+    # Help Power BI optimize your experience
+    ExpFlightingTenant:
+      enabled: false
+
+    # === Workspace settings ===
+    # Fabric item recovery
+    ConfigureArtifactRetentionPeriod:
+      enabled: true
+      properties:
+        - name: "ArtifactRetentionPeriod"
+          value: "14"
+          type: Integer
+    # Define workspace retention period
+    ConfigureFolderRetentionPeriod:
+      enabled: true
+      properties:
+        - name: "FolderRetentionPeriod"
+          value: "14"
+          type: Integer
+    # Create workspaces
+    CreateAppWorkspaces:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+    # Block users from reassigning personal workspaces (My Workspace)
+    RestrictMyFolderCapacity:
+      enabled: true
+    # Use semantic models across workspaces
+    UseDatasetsAcrossWorkspaces:
+      enabled: true
+
+# -----------------------------------------------------------------------------
+# targets — environments. Each may override workspace, variables, security,
+# run identity, per-resource properties, post-deploy checks and the strategy.
+# -----------------------------------------------------------------------------
+targets:
+  dev:
+    default: true
+    workspace:
+      name: default-complete-dev
+      capacity_id: "${var.capacity_id}"
+      description: "Development workspace"
+      folders_by_type: true
+    variables:
+      environment: dev
+      region: eastus
+    post_deploy:
+      - run: ingest_notebook
+        expect: success
+        timeout: 300
+
+  staging:
+    workspace:
+      name: default-complete-staging
+      capacity_id: "${var.capacity_id}"
+      description: "Staging workspace"
+    variables:
+      environment: staging
+    run_as:
+      service_principal: app-udp-deploy
+    security:
+      roles:
+        - name: staging-testers
+          entra_group: sg-data-analysts
+          workspace_role: contributor
+    resources:
+      notebooks:
+        ingest_notebook:
+          spark_properties:
+            spark.sql.shuffle.partitions: "300"
+      pipelines:
+        orchestration_pipeline:
+          schedule:
+            enabled: false
+    post_deploy:
+      - run: orchestration_pipeline
+        expect: success
+        timeout: 600
+      - sql: "SELECT COUNT(*) FROM curated_lakehouse.sales WHERE order_date = CURRENT_DATE()"
+        expect: "> 0"
+        timeout: 60
+
+  prod:
+    workspace:
+      name: default-complete-prod
+      capacity_id: "${var.capacity_id}"
+      description: "Production workspace"
+    variables:
+      environment: prod
+      region: westus2
+    run_as:
+      service_principal: app-udp-deploy
+    security:
+      roles:
+        - name: prod-admins
+          entra_group: sg-fabric-admins
+          workspace_role: admin
+        - name: prod-readers
+          entra_group: sg-data-analysts
+          workspace_role: viewer
+          onelake_roles:
+            - tables: [sales]
+              permissions: [read]
+    deployment_strategy:
+      type: canary                      # or all-at-once (the default)
+      canary_resources:
+        - ingest_notebook
+        - raw_lakehouse
+      validation:
+        run: ingest_notebook
+        expect: success
+        timeout: 300
+    resources:
+      lakehouses:
+        raw_lakehouse:
+          description: "Production landing zone"
+      notebooks:
+        ingest_notebook:
+          spark_properties:
+            spark.sql.shuffle.partitions: "800"
+      pipelines:
+        orchestration_pipeline:
+          schedule:
+            cron: "0 4 * * *"
+      warehouses:
+        analytics_warehouse:
+          description: "Production analytics warehouse"
+      semantic_models:
+        sales_model:
+          refresh_timeout: 1800
+      reports:
+        sales_report:
+          folder: BI/Production
+      data_agents:
+        analytics_agent:
+          tables_in_scope: [sales]
+      environments:
+        spark_env:
+          runtime: "1.3"
+      eventhouses:
+        telemetry_eventhouse:
+          retention_days: 730
+      eventstreams:
+        telemetry_stream:
+          description: "Production telemetry stream"
+    post_deploy:
+      - run: ingest_notebook
+        expect: success
+        timeout: 900
+
+  existing:
+    # Deploy into an already-created workspace (workspace_id wins over name).
+    workspace:
+      name: default-complete-existing
+      workspace_id: "${var.existing_workspace_id}"
+    run_as:
+      user_name: "${var.workspace_owner_upn}"
+
+# -----------------------------------------------------------------------------
+# include / extends — split a real project across files (kept off here so the
+# whole reference stays in one file).
+#
+#   include:            # merged into this file; this file wins on conflicts
+#     - resources/*.yml
+#     - security/roles.yml
+#   extends: ../shared/udp.yml   # parent deployment; this file overrides it
+# -----------------------------------------------------------------------------

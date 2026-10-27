@@ -1,0 +1,1 @@
+{ "name": "graph_model", "entities": [{ "name": "Customer", "table": "customers" }, { "name": "Order", "table": "sales" }] }

@@ -1,0 +1,32 @@
+# Minimal example — one lakehouse, one notebook
+# Copy this folder, update capacity_id, and run:
+#   udpi30 validate
+#   udpi30 deploy -t dev
+
+deployment:
+  name: minimal-example
+  version: "1.0.0"
+  description: "Minimal Fabric deployment — one lakehouse and one notebook"
+
+resources:
+  lakehouses:
+    my_lakehouse:
+      description: "Single lakehouse for data storage"
+
+  notebooks:
+    hello_udp:
+      path: ./notebooks/hello.py
+      description: "Hello world notebook"
+      default_lakehouse: my_lakehouse
+
+targets:
+  dev:
+    default: true
+    workspace:
+      name: minimal-example-dev
+      capacity_id: "${var.capacity_id}"
+
+variables:
+  capacity_id:
+    description: "Your Fabric capacity GUID"
+    default: "11f0c0fe-ec6f-477b-8268-51dc64534f1c"

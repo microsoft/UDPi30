@@ -1,0 +1,185 @@
+# Manual deployment-example harness for Azure DevOps.
+# Create a protected variable group named udp-deployment-tests containing the
+# deployment variables and secrets. Add a Branch Control check for main. Configure
+# UDP_AZURE_SERVICE_CONNECTION there as a workload-identity service connection.
+
+trigger: none
+pr: none
+
+parameters:
+  - name: mode
+    displayName: Execution depth
+    type: string
+    default: Preflight
+    values:
+      - Preflight
+      - Validate
+      - Plan
+      - Deploy
+  - name: exampleIds
+    displayName: Optional comma-separated IDs (01 through 14)
+    type: string
+    default: ''
+  - name: inputsPath
+    displayName: Optional repository-relative non-secret inputs JSON
+    type: string
+    default: ''
+  - name: keepResources
+    displayName: Keep test resources after verification
+    type: boolean
+    default: false
+  - name: allowTenantAdminChanges
+    displayName: Allow example 09 tenant-wide mutation
+    type: boolean
+    default: false
+
+variables:
+  - name: dotnetVersion
+    value: '9.0.x'
+  - name: cliOutputDirectory
+    value: '$(Build.BinariesDirectory)/deployment-test-cli'
+  - name: artifactDirectory
+    value: '$(Build.ArtifactStagingDirectory)/deployment-test-artifacts'
+  - ${{ if or(eq(parameters.mode, 'Plan'), eq(parameters.mode, 'Deploy')) }}:
+      - group: udp-deployment-tests
+
+pool:
+  vmImage: ubuntu-24.04
+
+steps:
+  - checkout: self
+    clean: true
+    fetchDepth: 1
+    persistCredentials: false
+
+  - task: UseDotNet@2
+    displayName: Set up .NET
+    inputs:
+      packageType: sdk
+      version: $(dotnetVersion)
+      useGlobalJson: true
+      workingDirectory: $(Build.SourcesDirectory)/dotnet
+
+  - task: PowerShell@2
+    displayName: Test deployment harness
+    inputs:
+      pwsh: true
+      targetType: inline
+      workingDirectory: $(Build.SourcesDirectory)
+      script: |
+        New-Item -ItemType Directory -Path '$(artifactDirectory)' -Force | Out-Null
+        Install-Module Pester -RequiredVersion 5.7.1 -Scope CurrentUser -Force
+        $configuration = New-PesterConfiguration
+        $configuration.Run.Path = './deployment-tests/tests'
+        $configuration.Run.Exit = $true
+        $configuration.Output.Verbosity = 'Detailed'
+        $configuration.TestResult.Enabled = $true
+        $configuration.TestResult.OutputFormat = 'NUnitXml'
+        $configuration.TestResult.OutputPath = '$(artifactDirectory)/harness-tests.xml'
+        Invoke-Pester -Configuration $configuration
+
+  - pwsh: >-
+      dotnet publish ./dotnet/src/Udpi30.Cli/Udpi30.Cli.csproj
+      --configuration Release
+      --output '$(cliOutputDirectory)'
+    displayName: Build udpi30 CLI
+
+  - ${{ if or(eq(parameters.mode, 'Preflight'), eq(parameters.mode, 'Validate')) }}:
+      - task: PowerShell@2
+        displayName: Run deployment test suite
+        inputs:
+          pwsh: true
+          targetType: inline
+          workingDirectory: $(Build.SourcesDirectory)
+          script: |
+            $arguments = @(
+              '-Mode', $env:HARNESS_MODE,
+              '-OutputDirectory', $env:HARNESS_OUTPUT,
+              '-CliFilePath', 'dotnet',
+              '-CliPrefixArguments', $env:UDPI30_DLL
+            )
+            if (-not [string]::IsNullOrWhiteSpace($env:HARNESS_EXAMPLE_IDS)) {
+              $arguments += '-ExampleId'
+              $arguments += @($env:HARNESS_EXAMPLE_IDS -split '[,\s]+' | Where-Object { $_ })
+            }
+            if (-not [string]::IsNullOrWhiteSpace($env:HARNESS_INPUTS_PATH)) {
+              $arguments += '-InputsPath'
+              $arguments += $env:HARNESS_INPUTS_PATH
+            }
+            if ($env:HARNESS_KEEP_RESOURCES -eq 'true') { $arguments += '-KeepResources' }
+            & ./deployment-tests/Invoke-DeploymentTestSuite.ps1 @arguments
+            exit $LASTEXITCODE
+        env:
+          HARNESS_MODE: ${{ parameters.mode }}
+          HARNESS_EXAMPLE_IDS: ${{ parameters.exampleIds }}
+          HARNESS_INPUTS_PATH: ${{ parameters.inputsPath }}
+          HARNESS_KEEP_RESOURCES: ${{ lower(parameters.keepResources) }}
+          HARNESS_OUTPUT: $(artifactDirectory)
+          UDPI30_DLL: $(cliOutputDirectory)/udpi30.dll
+          UDP_TEST_FABRIC_CAPACITY_ID: 11111111-1111-1111-1111-111111111111
+
+  - ${{ if or(eq(parameters.mode, 'Plan'), eq(parameters.mode, 'Deploy')) }}:
+      - task: PowerShell@2
+        displayName: Enforce trusted deployment branch
+        inputs:
+          pwsh: true
+          targetType: inline
+          script: |
+            if ($env:BUILD_SOURCEBRANCH -ne 'refs/heads/main') {
+              throw "Plan and Deploy are allowed only from refs/heads/main; current branch: $env:BUILD_SOURCEBRANCH"
+            }
+
+      - task: AzureCLI@2
+        displayName: Run authenticated deployment test suite
+        condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+        inputs:
+          azureSubscription: $(UDP_AZURE_SERVICE_CONNECTION)
+          scriptType: pscore
+          scriptLocation: inlineScript
+          workingDirectory: $(Build.SourcesDirectory)
+          inlineScript: |
+            $arguments = @(
+              '-Mode', $env:HARNESS_MODE,
+              '-OutputDirectory', $env:HARNESS_OUTPUT,
+              '-CliFilePath', 'dotnet',
+              '-CliPrefixArguments', $env:UDPI30_DLL
+            )
+            if (-not [string]::IsNullOrWhiteSpace($env:HARNESS_EXAMPLE_IDS)) {
+              $arguments += '-ExampleId'
+              $arguments += @($env:HARNESS_EXAMPLE_IDS -split '[,\s]+' | Where-Object { $_ })
+            }
+            if (-not [string]::IsNullOrWhiteSpace($env:HARNESS_INPUTS_PATH)) {
+              $arguments += '-InputsPath'
+              $arguments += $env:HARNESS_INPUTS_PATH
+            }
+            if ($env:HARNESS_KEEP_RESOURCES -eq 'true') { $arguments += '-KeepResources' }
+            if ($env:HARNESS_ALLOW_TENANT_ADMIN -eq 'true') { $arguments += '-AllowTenantAdminChanges' }
+            & ./deployment-tests/Invoke-DeploymentTestSuite.ps1 @arguments
+            exit $LASTEXITCODE
+        env:
+          HARNESS_MODE: ${{ parameters.mode }}
+          HARNESS_EXAMPLE_IDS: ${{ parameters.exampleIds }}
+          HARNESS_INPUTS_PATH: ${{ parameters.inputsPath }}
+          HARNESS_KEEP_RESOURCES: ${{ lower(parameters.keepResources) }}
+          HARNESS_ALLOW_TENANT_ADMIN: ${{ lower(parameters.allowTenantAdminChanges) }}
+          HARNESS_OUTPUT: $(artifactDirectory)
+          UDPI30_DLL: $(cliOutputDirectory)/udpi30.dll
+          UDP_TEST_FABRIC_CAPACITY_ID: $(UDP_TEST_FABRIC_CAPACITY_ID)
+          UDP_TEST_AZURE_SUBSCRIPTION_ID: $(UDP_TEST_AZURE_SUBSCRIPTION_ID)
+          UDP_TEST_ENTRA_TENANT_ID: $(UDP_TEST_ENTRA_TENANT_ID)
+          UDP_TEST_ADLS_CONNECTION_ID: $(UDP_TEST_ADLS_CONNECTION_ID)
+          UDP_TEST_DATA_ENG_GROUP_ID: $(UDP_TEST_DATA_ENG_GROUP_ID)
+          UDP_TEST_CONTRACTORS_GROUP_ID: $(UDP_TEST_CONTRACTORS_GROUP_ID)
+          UDP_TEST_BI_ADMINS_GROUP_ID: $(UDP_TEST_BI_ADMINS_GROUP_ID)
+          UDP_TEST_SLACK_WEBHOOK: $(UDP_TEST_SLACK_WEBHOOK)
+          PROD_DB_HOST: $(PROD_DB_HOST)
+          UDP_TEST_PRINCIPAL_MAPPINGS_JSON: $(UDP_TEST_PRINCIPAL_MAPPINGS_JSON)
+          UDP_TEST_TEXT_REPLACEMENTS_JSON: $(UDP_TEST_TEXT_REPLACEMENTS_JSON)
+
+  - task: PublishPipelineArtifact@1
+    displayName: Publish deployment test evidence
+    condition: always()
+    inputs:
+      targetPath: $(artifactDirectory)
+      artifact: deployment-example-report-$(Build.BuildId)
+      publishLocation: pipeline

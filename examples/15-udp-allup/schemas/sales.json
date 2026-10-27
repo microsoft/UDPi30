@@ -1,0 +1,9 @@
+{
+  "table": "sales",
+  "columns": [
+    { "name": "order_id", "type": "string" },
+    { "name": "order_date", "type": "date" },
+    { "name": "customer_id", "type": "string" },
+    { "name": "total_amount", "type": "decimal(18,2)" }
+  ]
+}

@@ -1,0 +1,94 @@
+# Tenant / Admin Settings Example
+# Declaratively manage org-wide Fabric tenant settings.
+#
+# These are NOT workspace items — they apply tenant-wide via the Fabric Admin API.
+# Apply with the gated command (Fabric admin / SP Tenant.ReadWrite.All required):
+#
+#   udpi30 admin plan -f udp.yml      # preview against the live tenant
+#   udpi30 admin apply -f udp.yml     # apply (prompts for confirmation)
+#
+# Settings are keyed by their API settingName (e.g. PublishToWeb), NOT the portal
+# title. Discover the identifiers for your tenant with:
+#   az rest --method get --url "https://api.fabric.microsoft.com/v1/admin/tenantsettings" \
+#     --resource "https://api.fabric.microsoft.com" --query "tenantSettings[].settingName"
+#
+# This example exercises EVERY field the feature supports:
+#   enabled, delegate_to_capacity, delegate_to_domain, delegate_to_workspace,
+#   enabled_security_groups, excluded_security_groups, and properties (all five
+#   property types: FreeText, Url, Boolean, MailEnabledSecurityGroup, Integer).
+#
+# The settingName identifiers below are illustrative — only those that exist in
+# your tenant will apply; `admin plan` flags any unknown name.
+
+deployment:
+  name: tenant-settings
+  version: "1.0.0"
+  description: "Org-wide Fabric tenant settings"
+
+variables:
+  data_eng_group_id:
+    description: "Object ID of the Data Engineers security group"
+    default: "REPLACE-WITH-SECURITY-GROUP-GUID"
+  contractors_group_id:
+    description: "Object ID of the Contractors security group (excluded)"
+    default: "REPLACE-WITH-SECURITY-GROUP-GUID"
+  bi_admins_group_id:
+    description: "Object ID of the BI Admins security group"
+    default: "REPLACE-WITH-SECURITY-GROUP-GUID"
+
+admin:
+  tenant_settings:
+    # 1. Simplest form — turn Publish to web off for the whole organization.
+    PublishToWeb:
+      enabled: false
+
+    # 2. Enable for one security group, exclude another. Only the groups you
+    #    declare are managed — udpi30 never clears groups it didn't set.
+    DevelopmentTenantSettings:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.data_eng_group_id}"
+          name: "Data Engineers"
+      excluded_security_groups:
+        - graph_id: "${var.contractors_group_id}"
+          name: "Contractors"
+
+    # 3. Every delegation override, declared together. The delegate_to_* fields
+    #    are only diffed/applied when present, so listing all three pins them.
+    UsageMetricsSettings:
+      enabled: true
+      delegate_to_capacity: true
+      delegate_to_domain: false
+      delegate_to_workspace: true
+      enabled_security_groups:
+        - graph_id: "${var.bi_admins_group_id}"
+          name: "BI Admins"
+
+    # 4. Typed properties — one of each supported type so you can copy the shape.
+    #    type is FreeText | Url | Boolean | MailEnabledSecurityGroup | Integer.
+    ExportToCsvSettings:
+      enabled: true
+      delegate_to_workspace: true
+      properties:
+        - name: "WatermarkText"
+          value: "Internal use only"
+          type: FreeText
+        - name: "PolicyUrl"
+          value: "https://contoso.com/data-policy"
+          type: Url
+        - name: "RequireApproval"
+          value: "true"
+          type: Boolean
+        - name: "ApproversGroup"
+          value: "${var.bi_admins_group_id}"
+          type: MailEnabledSecurityGroup
+        - name: "MaxRows"
+          value: "1000000"
+          type: Integer
+
+targets:
+  prod:
+    default: true
+    workspace:
+      name: tenant-settings-prod
+      capacity_id: "00000000-0000-0000-0000-000000000000"

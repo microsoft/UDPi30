@@ -1,0 +1,9 @@
+// Process layer: KQL update policy that derives curated readings from raw telemetry.
+.create-merge table DeviceReadings (
+    DeviceId: string,
+    Timestamp: datetime,
+    Temperature: real
+)
+
+.alter table DeviceReadings policy update
+@'[{"IsEnabled": true, "Source": "DeviceTelemetry", "Query": "DeviceTelemetry | project DeviceId, Timestamp, Temperature", "IsTransactional": false}]'

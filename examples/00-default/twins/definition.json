@@ -1,0 +1,1 @@
+{ "name": "plant_twin", "entityTypes": [{ "name": "Pump" }, { "name": "Tank" }] }

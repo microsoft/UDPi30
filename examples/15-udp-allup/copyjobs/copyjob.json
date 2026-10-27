@@ -1,0 +1,5 @@
+{
+  "name": "copy_job",
+  "source": { "type": "AzureDataLakeStorage", "path": "sales/daily" },
+  "destination": { "type": "Lakehouse", "table": "raw_sales" }
+}

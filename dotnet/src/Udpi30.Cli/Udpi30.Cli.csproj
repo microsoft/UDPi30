@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Udpi30.Cli</RootNamespace>
+    <AssemblyName>udpi30</AssemblyName>
+
+    <!-- Packaged and installed as a global .NET tool: `dotnet tool install -g udpi30` -->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>udpi30</ToolCommandName>
+    <PackageId>udpi30</PackageId>
+    <Description>Project definition for Microsoft Unified Data Platform — declarative CI/CD for Microsoft Fabric.</Description>
+    <PackageTags>microsoft-fabric;iac;infrastructure-as-code;ci-cd;devops;udp-cli;udpi30</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <!-- Templates ship dotfiles (.gitignore) that the packer excludes by default. -->
+    <NoDefaultExcludes>true</NoDefaultExcludes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine" Version="2.0.8" />
+    <PackageReference Include="Spectre.Console" Version="0.56.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Udpi30.Core\Udpi30.Core.csproj" />
+  </ItemGroup>
+
+</Project>

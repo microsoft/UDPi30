@@ -1,0 +1,11 @@
+name: all-resource-types
+description: "Reference catalogue — a udp.yml that declares all 45 supported Fabric item types"
+version: "1.0.0"
+author: "Unified Data Platform Deployment"
+variables:
+  project_name:
+    description: "Name of the project"
+    default: "udp-all-types"
+  capacity_id:
+    description: "Fabric capacity GUID (from Admin Portal → Capacities)"
+    default: ""

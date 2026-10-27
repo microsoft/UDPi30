@@ -1,0 +1,16 @@
+table Metrics
+
+	column Name
+		dataType: string
+		summarizeBy: none
+		sourceColumn: [Name]
+
+	column Value
+		dataType: int64
+		formatString: 0
+		summarizeBy: sum
+		sourceColumn: [Value]
+
+	partition Metrics = calculated
+		mode: import
+		source = DATATABLE("Name", STRING, "Value", INTEGER, {{"Sample", 1}})

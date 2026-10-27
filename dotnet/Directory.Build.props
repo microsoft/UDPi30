@@ -1,0 +1,19 @@
+<Project>
+  <!-- Shared settings for every project in the Udpi30 solution. -->
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+
+    <!-- Package / assembly metadata (mirrors pyproject.toml) -->
+    <Version>1.14.0</Version>
+    <Authors>UDP</Authors>
+    <Company>Microsoft Unified Data Platform</Company>
+    <Product>UDPI30</Product>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/microsoft/udpi30</RepositoryUrl>
+    <PackageProjectUrl>https://microsoft.github.io/udpi30/</PackageProjectUrl>
+  </PropertyGroup>
+</Project>

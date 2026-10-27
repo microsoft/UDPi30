@@ -1,0 +1,5 @@
+{
+  "name": "churn_model",
+  "framework": "sklearn",
+  "description": "Placeholder (ML model artifacts are produced by training runs)"
+}

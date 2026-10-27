@@ -1,0 +1,9 @@
+{
+  "rules": [
+    {
+      "name": "High temperature",
+      "condition": "Temperature > 80",
+      "action": { "type": "email", "to": "ops@contoso.com" }
+    }
+  ]
+}

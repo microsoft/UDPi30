@@ -1,0 +1,10 @@
+// Telemetry ingestion table
+.create-merge table DeviceTelemetry (
+    DeviceId: string,
+    Timestamp: datetime,
+    Temperature: real,
+    Humidity: real,
+    BatteryLevel: real
+)
+
+.alter table DeviceTelemetry policy streamingingestion enable

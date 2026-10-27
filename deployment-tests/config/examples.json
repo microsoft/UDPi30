@@ -1,0 +1,147 @@
+{
+  "$schema": "./examples.schema.json",
+  "schemaVersion": "1.0",
+  "examples": [
+    {
+      "id": "01",
+      "name": "minimal",
+      "path": "examples/01-minimal",
+      "defaultTarget": "dev",
+      "supportLevel": "deployable",
+      "executionMode": "deployment",
+      "planes": ["Fabric"],
+      "verification": ["status", "drift"]
+    },
+    {
+      "id": "02",
+      "name": "medallion-lakehouse",
+      "path": "examples/02-medallion-lakehouse",
+      "defaultTarget": "dev",
+      "supportLevel": "deployable-with-inputs",
+      "executionMode": "deployment",
+      "planes": ["Fabric", "EntraReference"],
+      "verification": ["status", "drift"]
+    },
+    {
+      "id": "03",
+      "name": "real-time-intelligence",
+      "path": "examples/03-real-time-intelligence",
+      "defaultTarget": "dev",
+      "supportLevel": "deployable-with-inputs",
+      "executionMode": "deployment",
+      "planes": ["Fabric"],
+      "verification": ["status", "drift"]
+    },
+    {
+      "id": "04",
+      "name": "data-science",
+      "path": "examples/04-data-science",
+      "defaultTarget": "dev",
+      "supportLevel": "deployable",
+      "executionMode": "deployment",
+      "planes": ["Fabric"],
+      "verification": ["status", "drift"]
+    },
+    {
+      "id": "05",
+      "name": "multi-environment",
+      "path": "examples/05-multi-environment",
+      "defaultTarget": "dev",
+      "supportLevel": "deployable-with-inputs",
+      "executionMode": "deployment",
+      "planes": ["Fabric", "EntraReference", "ExternalData"],
+      "verification": ["status", "drift"]
+    },
+    {
+      "id": "06",
+      "name": "shortcuts-and-connections",
+      "path": "examples/06-shortcuts-and-connections",
+      "defaultTarget": "dev",
+      "supportLevel": "deployable-with-inputs",
+      "executionMode": "deployment",
+      "planes": ["Fabric", "ExternalData"],
+      "verification": ["status", "drift"]
+    },
+    {
+      "id": "07",
+      "name": "shortcut-transformations",
+      "path": "examples/07-shortcut-transformations",
+      "defaultTarget": "dev",
+      "supportLevel": "deployable-with-inputs",
+      "executionMode": "deployment",
+      "planes": ["Fabric", "ExternalData", "AzureAI"],
+      "verification": ["status", "drift"]
+    },
+    {
+      "id": "08",
+      "name": "all-resource-types",
+      "path": "examples/08-all-resource-types",
+      "defaultTarget": "dev",
+      "supportLevel": "validation-only",
+      "executionMode": "deployment",
+      "planes": ["Fabric", "EntraReference", "ExternalData"],
+      "verification": ["status", "drift"]
+    },
+    {
+      "id": "09",
+      "name": "tenant-settings",
+      "path": "examples/09-tenant-settings",
+      "defaultTarget": "prod",
+      "supportLevel": "admin-plan-only",
+      "executionMode": "admin",
+      "planes": ["FabricAdmin", "EntraReference"],
+      "verification": ["admin-plan"],
+      "cleanupMode": "restore-snapshot"
+    },
+    {
+      "id": "10",
+      "name": "azure-and-entra",
+      "path": "examples/10-azure-and-entra",
+      "defaultTarget": "dev",
+      "supportLevel": "deployable-with-inputs",
+      "executionMode": "deployment",
+      "planes": ["Fabric", "Azure", "Entra"],
+      "verification": ["status", "drift", "azure-resource-exists", "entra-object-exists"]
+    },
+    {
+      "id": "11",
+      "name": "azure-data-services",
+      "path": "examples/11-azure-data-services",
+      "defaultTarget": "dev",
+      "supportLevel": "contract-only",
+      "executionMode": "deployment",
+      "planes": ["Azure"],
+      "verification": ["status", "drift", "azure-resource-exists"]
+    },
+    {
+      "id": "12",
+      "name": "azure-platform-services",
+      "path": "examples/12-azure-platform-services",
+      "defaultTarget": "dev",
+      "supportLevel": "contract-only",
+      "executionMode": "deployment",
+      "planes": ["Azure", "Purview"],
+      "verification": ["status", "drift", "azure-resource-exists", "purview-account-ready"]
+    },
+    {
+      "id": "13",
+      "name": "realtime-governance",
+      "path": "examples/13-realtime-governance",
+      "defaultTarget": "dev",
+      "supportLevel": "deployable-with-inputs",
+      "executionMode": "deployment",
+      "planes": ["Fabric", "Azure"],
+      "verification": ["status", "drift", "azure-resource-exists"]
+    },
+    {
+      "id": "14",
+      "name": "streaming-lakehouse-governance",
+      "path": "examples/14-streaming-lakehouse-governance",
+      "defaultTarget": "dev",
+      "supportLevel": "deployable-with-inputs",
+      "executionMode": "deployment",
+      "planes": ["Fabric", "Azure"],
+      "verification": ["status", "drift", "azure-resource-exists"]
+    }
+  ]
+}

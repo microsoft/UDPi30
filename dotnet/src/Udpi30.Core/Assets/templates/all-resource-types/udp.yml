@@ -1,0 +1,323 @@
+# All Resource Types template
+# Declares every one of the 45 supported Fabric item types. This is a reference
+# catalogue to copy from — most real projects need only a handful of these.
+# Delete what you don't use. Strict-naming types (lakehouses, warehouses,
+# eventhouses, kql_databases, sql_databases) allow only letters, numbers, and
+# underscores in their keys.
+
+deployment:
+  name: ${{ project_name }}
+  version: "0.1.0"
+  description: "Reference deployment that declares all 45 supported resource types"
+
+workspace:
+  # Your Fabric capacity GUID — find it in the Fabric Admin Portal → Capacities
+  capacity_id: ${{ capacity_id }}
+  # Organize deployed items into Fabric workspace folders by type. Every item
+  # type maps to a folder (Notebooks, Pipelines, Lakehouses, Models, Databases,
+  # Warehouses, Environments, Reports, Agents, Variables, Real-Time, Data Factory,
+  # Data Engineering, Graph, Maps, Healthcare).
+  folders_by_type: true
+
+resources:
+
+  # --- Data Engineering -----------------------------------------------------
+  environments:
+    spark_env:
+      description: "Shared Spark runtime + libraries"
+      runtime: "1.3"
+      libraries: [semantic-link-labs]
+      spark_properties:
+        spark.sql.shuffle.partitions: "200"
+
+  lakehouses:
+    raw_lakehouse:
+      description: "Raw landing zone"
+      schemas: [landing]
+      shortcuts:
+        - name: external_sales
+          target: "abfss://data@contoso.dfs.core.windows.net/sales"
+          path: Tables
+    curated_lakehouse:
+      description: "Curated, business-ready datasets"
+      tables:
+        sales:
+          partition_by: [order_date]
+          description: "Curated sales fact table"
+
+  notebooks:
+    ingest_notebook:
+      path: ./notebooks/ingest.py
+      description: "Ingest raw data into the lakehouse"
+      environment: spark_env
+      default_lakehouse: raw_lakehouse
+
+  spark_job_definitions:
+    batch_job:
+      description: "Scheduled Spark batch job"
+      path: ./spark/batch_job.py
+      environment: spark_env
+      default_lakehouse: curated_lakehouse
+      args: ["--mode", "full"]
+
+  materialized_lake_views:
+    curated_daily_summary:
+      description: "Incrementally-refreshed daily rollup over the curated lakehouse"
+      path: ./sql/curated_daily_summary.sql
+      default_lakehouse: curated_lakehouse
+      refresh_cron: "0 3 * * *"
+
+  graphql_apis:
+    data_api:
+      description: "GraphQL API over curated data"
+      data_source: curated_lakehouse
+
+  user_data_functions:
+    udf_helpers:
+      description: "Reusable user data functions"
+      path: ./functions/
+      runtime: python
+
+  # --- Data Factory ---------------------------------------------------------
+  pipelines:
+    orchestration_pipeline:
+      description: "Orchestrates ingestion and transformation"
+      schedule:
+        cron: "0 6 * * *"
+        timezone: America/Chicago
+      activities:
+        - notebook: ingest_notebook
+
+  copy_jobs:
+    copy_job:
+      description: "Copy data between stores"
+      path: ./copyjobs/copy.json
+
+  airflow_jobs:
+    airflow_dag:
+      description: "Apache Airflow orchestration job"
+      path: ./airflow/
+
+  mounted_data_factories:
+    mounted_adf:
+      description: "Mounted Azure Data Factory"
+      data_factory_id: "/subscriptions/.../resourceGroups/rg/providers/Microsoft.DataFactory/factories/adf"
+
+  dbt_jobs:
+    dbt_transform:
+      description: "dbt transformation job (capacity-gated)"
+      path: ./dbt/
+      environment: spark_env
+
+  # --- Data Warehouse -------------------------------------------------------
+  warehouses:
+    analytics_warehouse:
+      description: "SQL analytics warehouse"
+      sql_scripts:
+        - ./sql/create_views.sql
+
+  sql_databases:
+    app_db:
+      description: "Operational SQL database"
+      sql_scripts:
+        - ./sql/app_schema.sql
+
+  mirrored_databases:
+    mirrored_sales:
+      description: "Mirrored source database"
+      source_type: SQLServer
+      connection: "sql-source-connection"
+
+  mirrored_warehouses:
+    mirrored_dw:
+      description: "Mirrored warehouse (list-only)"
+      source_type: Snowflake
+
+  snowflake_databases:
+    snowflake_db:
+      description: "Snowflake-backed database (needs connection)"
+      connection: "snowflake-connection"
+
+  cosmosdb_databases:
+    cosmos_db:
+      description: "Cosmos DB mirrored database"
+      connection: "cosmos-connection"
+
+  mirrored_databricks_catalogs:
+    databricks_catalog:
+      description: "Mirrored Azure Databricks catalog"
+      connection: "databricks-connection"
+
+  datamarts:
+    sales_datamart:
+      description: "Sales datamart (list-only)"
+
+  # --- Power BI -------------------------------------------------------------
+  semantic_models:
+    sales_model:
+      path: ./semantic_model/
+      description: "Power BI semantic model (supply TMDL files in path)"
+      default_lakehouse: curated_lakehouse
+
+  reports:
+    sales_report:
+      path: ./reports/sales/
+      description: "Power BI report (supply PBIR files in path)"
+      semantic_model: sales_model
+
+  paginated_reports:
+    invoice_report:
+      description: "Paginated invoice report (list-only)"
+      path: ./reports/invoices/
+      data_source: sales_model
+
+  dashboards:
+    exec_dashboard:
+      description: "Executive dashboard (list-only)"
+
+  dataflows:
+    ingest_dataflow:
+      description: "Gen2 dataflow (list-only)"
+      path: ./dataflows/ingest/
+
+  # --- Data Science ---------------------------------------------------------
+  ml_models:
+    churn_model:
+      description: "Customer churn model"
+      framework: sklearn
+
+  ml_experiments:
+    churn_experiment:
+      description: "Churn model training experiment"
+
+  # --- Real-Time Intelligence ----------------------------------------------
+  eventhouses:
+    telemetry_eventhouse:
+      description: "Eventhouse for IoT telemetry"
+      kql_scripts:
+        - ./kql/create_tables.kql
+      retention_days: 90
+
+  kql_databases:
+    telemetry_db:
+      description: "KQL database for device telemetry"
+      parent_eventhouse: telemetry_eventhouse
+
+  eventstreams:
+    telemetry_stream:
+      description: "Ingests IoT device events in real time"
+
+  kql_querysets:
+    telemetry_queries:
+      description: "Saved KQL queries"
+      path: ./kql/queries/
+      data_source: telemetry_db
+
+  kql_dashboards:
+    ops_dashboard:
+      description: "Real-time operations dashboard"
+      data_source: telemetry_db
+
+  reflex:
+    anomaly_alerts:
+      description: "Data Activator alerting rules"
+      path: ./reflex/rules.json
+
+  digital_twin_builders:
+    twin_builder:
+      description: "Digital twin builder"
+      path: ./twins/
+
+  digital_twin_builder_flows:
+    twin_flow:
+      description: "Digital twin builder flow (needs config)"
+      path: ./twins/flows/
+      twin_builder: twin_builder
+
+  event_schema_sets:
+    event_schemas:
+      description: "Event schema set (capacity-gated)"
+      path: ./schemas/
+
+  graph_query_sets:
+    graph_queries:
+      description: "Saved graph queries"
+      path: ./graphs/queries/
+      data_source: knowledge_graph
+
+  # --- AI & Knowledge -------------------------------------------------------
+  data_agents:
+    analytics_agent:
+      description: "Natural-language analytics agent"
+      sources: [curated_lakehouse]
+      instructions: ./agent/instructions.md
+      few_shot_examples: ./agent/examples.yaml
+
+  operations_agents:
+    ops_agent:
+      description: "Operations copilot agent"
+      sources: [telemetry_db]
+      instructions: ./agent/ops_instructions.md
+
+  anomaly_detectors:
+    anomaly_detector:
+      description: "Anomaly detection over telemetry"
+      data_source: telemetry_db
+      path: ./anomaly/
+
+  ontologies:
+    domain_ontology:
+      description: "Business domain ontology"
+      path: ./ontology/
+      data_sources: [curated_lakehouse]
+
+  # --- Graph & Spatial ------------------------------------------------------
+  graphs:
+    knowledge_graph:
+      description: "Knowledge graph"
+      path: ./graphs/
+      data_source: curated_lakehouse
+
+  graph_models:
+    graph_model:
+      description: "Graph model definition"
+      path: ./graphs/model/
+      data_source: curated_lakehouse
+
+  map_items:
+    asset_map:
+      description: "Geospatial asset map"
+      path: ./maps/
+
+  hls_cohorts:
+    patient_cohort:
+      description: "Healthcare cohort (capacity-gated)"
+      path: ./cohorts/
+
+  # --- Shared configuration -------------------------------------------------
+  variable_libraries:
+    shared_vars:
+      description: "Workspace-shared variables"
+      variables:
+        region: westus2
+        tier: standard
+
+security:
+  roles:
+    - name: engineers
+      entra_group: sg-data-eng
+      workspace_role: contributor
+    - name: analysts
+      entra_group: sg-analysts
+      workspace_role: viewer
+
+targets:
+  dev:
+    default: true
+    workspace:
+      name: ${{ project_name }}-dev
+      capacity_id: ${{ capacity_id }}
+  prod:
+    workspace:
+      name: ${{ project_name }}-prod
+      capacity_id: ${{ capacity_id }}

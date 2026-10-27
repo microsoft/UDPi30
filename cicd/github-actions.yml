@@ -1,0 +1,117 @@
+# Unified Data Platform Deployment — GitHub Actions CI/CD Pipeline
+#
+# This workflow validates on every PR and deploys on merge to main.
+#
+# Required secrets:
+#   AZURE_TENANT_ID      — Azure AD tenant ID
+#   AZURE_CLIENT_ID      — Service principal app ID
+#   AZURE_CLIENT_SECRET  — Service principal secret
+#
+# Optional variables:
+#   FABRIC_CAPACITY_ID   — Fabric capacity to assign to workspaces
+
+name: Fabric Deployment CI/CD
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'udp.yml'
+      - 'resources/**'
+      - 'notebooks/**'
+      - 'pipelines/**'
+      - 'sql/**'
+      - 'semantic_model/**'
+      - 'reports/**'
+      - 'agent/**'
+
+  push:
+    branches: [main]
+    paths:
+      - 'udp.yml'
+      - 'resources/**'
+      - 'notebooks/**'
+      - 'pipelines/**'
+      - 'sql/**'
+      - 'semantic_model/**'
+      - 'reports/**'
+      - 'agent/**'
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Validate — runs on every PR
+  # ---------------------------------------------------------------------------
+  validate:
+    name: Validate Deployment
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install udpi30
+        run: dotnet tool install --global udpi30
+
+      - name: Validate deployment definition
+        run: udpi30 validate
+
+      - name: Plan (dry-run) against dev
+        run: udpi30 plan -t dev
+
+  # ---------------------------------------------------------------------------
+  # Deploy to Staging — on merge to main
+  # ---------------------------------------------------------------------------
+  deploy-staging:
+    name: Deploy to Staging
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install udpi30
+        run: dotnet tool install --global udpi30
+
+      - name: Plan staging deployment
+        run: udpi30 plan -t staging
+
+      - name: Deploy to staging
+        run: udpi30 deploy -t staging -y
+
+  # ---------------------------------------------------------------------------
+  # Deploy to Production — manual approval via GitHub environment
+  # ---------------------------------------------------------------------------
+  deploy-prod:
+    name: Deploy to Production
+    needs: deploy-staging
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production  # Requires manual approval in GitHub settings
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install udpi30
+        run: dotnet tool install --global udpi30
+
+      - name: Plan production deployment
+        run: udpi30 plan -t prod
+
+      - name: Deploy to production
+        run: udpi30 deploy -t prod -y

@@ -1,0 +1,84 @@
+# Streaming analytics + Azure governance — the concrete form of the
+# `streaming-lakehouse-governance` template (init it with:
+#   udpi30 init --template streaming-lakehouse-governance --name my-streaming)
+#
+# Events land in Azure Event Hub, are processed by Azure Databricks, and the
+# curated results are stored in a Fabric Lakehouse exposed through a Data Agent.
+# Azure Key Vault, Policy, Defender, Monitor, and Sentinel govern the estate.
+#
+#   udpi30 validate
+#   udpi30 deploy -t dev
+
+deployment:
+  name: streaming-lakehouse-governance-example
+  version: "1.0.0"
+  description: "Event Hub → Databricks → Lakehouse + Data Agent, with Azure governance"
+
+azure:
+  subscription: "${var.subscription_id}"
+  location: eastus
+
+resources:
+  # --- Azure: landing group + streaming + governance ---
+  azure_resource_groups:
+    rg-streaming-dev:
+      location: eastus
+      tags: { workload: streaming }
+  azure_event_hub_namespaces:
+    ehns-streaming:
+      resource_group: rg-streaming-dev
+      sku: Standard
+  azure_databricks_workspaces:
+    dbw-streaming:
+      resource_group: rg-streaming-dev
+      sku: premium
+      properties:
+        managedResourceGroupId: "/subscriptions/${var.subscription_id}/resourceGroups/rg-streaming-dev-dbw-managed"
+  azure_key_vaults:
+    kv-streaming:
+      resource_group: rg-streaming-dev
+      properties:
+        sku: { family: A, name: standard }
+        enableRbacAuthorization: true
+  azure_policy_assignments:
+    require-resource-tags:
+      resource_group: rg-streaming-dev
+  azure_defender_plans:
+    defender-servers:
+      resource_group: rg-streaming-dev
+  azure_monitor_components:
+    appi-streaming:
+      resource_group: rg-streaming-dev
+      kind: web
+      properties: { Application_Type: web }
+  azure_sentinel:
+    sentinel-onboard:
+      resource_group: rg-streaming-dev
+
+  # --- Fabric: curated store + natural-language access ---
+  lakehouses:
+    streaming_lakehouse:
+      description: "Curated landing zone for processed stream data"
+      enable_schemas: true
+  data_agents:
+    streaming_agent:
+      description: "Natural-language interface over the streaming dataset"
+      sources:
+        - streaming_lakehouse
+      instructions: ./agent/instructions.md
+
+targets:
+  dev:
+    default: true
+    workspace:
+      name: streaming-lakehouse-dev
+      capacity_id: "${var.capacity_id}"
+      folders_by_type: true
+
+variables:
+  capacity_id:
+    description: "Your Fabric capacity GUID"
+    default: "REPLACE-WITH-YOUR-CAPACITY-GUID"
+  subscription_id:
+    description: "Target Azure subscription id"
+    default: "REPLACE-WITH-YOUR-SUBSCRIPTION-ID"

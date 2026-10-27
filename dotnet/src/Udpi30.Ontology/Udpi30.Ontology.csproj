@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Override the solution-wide net9.0 from Directory.Build.props: WinForms
+         needs the Windows desktop target framework. -->
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <OutputType>WinExe</OutputType>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>Udpi30.Ontology</RootNamespace>
+    <AssemblyName>Udpi30.Ontology</AssemblyName>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <!-- A GUI tool, not a NuGet package. -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Udpi30.Core\Udpi30.Core.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://udpi30.dev/schemas/deployment-tests/inputs.schema.json",
+  "title": "UDP deployment test inputs",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "values"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": "1.0" },
+    "values": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Non-secret values used to replace udp.yml variable defaults in the staged copy."
+    },
+    "principalMappings": {
+      "type": "object",
+      "additionalProperties": { "type": "string", "format": "uuid" },
+      "description": "Maps Entra display names in examples to existing object IDs."
+    },
+    "textReplacements": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Exact, non-secret replacements for external endpoints and resource identifiers in staged manifests."
+    },
+    "assetOverlays": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source", "destination"],
+          "properties": {
+            "source": { "type": "string", "minLength": 1 },
+            "destination": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "exampleOverrides": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": { "type": "boolean" },
+          "target": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$" },
+          "allowMutation": { "type": "boolean" },
+          "adminRestoreManifest": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

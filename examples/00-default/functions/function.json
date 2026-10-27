@@ -1,0 +1,9 @@
+{
+  "functions": [
+    {
+      "name": "normalize_email",
+      "description": "Lower-cases and trims an email address",
+      "runtime": "python"
+    }
+  ]
+}

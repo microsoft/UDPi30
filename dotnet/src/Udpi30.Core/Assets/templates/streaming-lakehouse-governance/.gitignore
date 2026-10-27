@@ -1,0 +1,10 @@
+# udpi30 state (machine-specific)
+.udpi30/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,6 @@
+# Few-shot examples — referenced by resources.data_agents.analytics_agent
+examples:
+  - question: "What were total sales by region last month?"
+    answer: "Aggregate curated_lakehouse.sales by region for the prior month and sum amount."
+  - question: "Which product had the most orders?"
+    answer: "Count orders in curated_lakehouse.sales grouped by product, return the top one."

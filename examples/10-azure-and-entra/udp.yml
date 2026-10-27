@@ -1,0 +1,80 @@
+# Azure + Entra + Fabric example — one deployment, three control planes.
+#
+# Fabric items deploy via the Fabric REST API into the workspace; Entra objects
+# deploy via Microsoft Graph at tenant scope; Azure resources deploy via Bicep
+# through the `az` CLI. Each non-Fabric type names the platform it belongs to.
+#
+#   udpi30 validate
+#   udpi30 deploy -t dev
+#
+# Prerequisites for the non-Fabric resources:
+#   - Entra: the deploying identity needs Group.ReadWrite.All / Application.ReadWrite.All
+#   - Azure: `az login` with rights on the target subscription
+
+deployment:
+  name: azure-and-entra-example
+  version: "1.0.0"
+  description: "Cross-plane deployment: Fabric + Entra + Azure (Bicep)"
+
+# Deployment-wide Azure defaults (overridable per resource).
+azure:
+  subscription: "${var.subscription_id}"
+  location: eastus
+
+resources:
+  # --- Microsoft Fabric (workspace scope) ---
+  lakehouses:
+    analytics_lh:
+      description: "Lakehouse for the analytics workload"
+
+  # --- Microsoft Entra (tenant scope, via Graph) ---
+  entra_groups:
+    sg-analytics-readers:
+      description: "Read access to the analytics workload"
+      security_enabled: true
+      members: []
+
+  entra_apps:
+    analytics-ingest-app:
+      description: "Service identity for the ingestion pipeline"
+      sign_in_audience: AzureADMyOrg
+      create_service_principal: true
+
+  # --- Azure (ARM via Bicep) ---
+  azure_resource_groups:
+    rg-analytics-dev:
+      location: eastus
+      tags:
+        env: dev
+        owner: data-platform
+
+  azure_storage_accounts:
+    saanalyticsdev01:
+      resource_group: rg-analytics-dev
+      sku: Standard_LRS
+      kind: StorageV2
+      access_tier: Hot
+
+  # Generic escape hatch — any resource type via an author-supplied .bicep file.
+  azure_deployments:
+    keyvault-analytics:
+      scope: group
+      resource_group: rg-analytics-dev
+      template_file: ./bicep/keyvault.bicep
+      parameters:
+        vaultName: kv-analytics-dev
+
+targets:
+  dev:
+    default: true
+    workspace:
+      name: azure-and-entra-dev
+      capacity_id: "${var.capacity_id}"
+
+variables:
+  capacity_id:
+    description: "Your Fabric capacity GUID"
+    default: "REPLACE-WITH-YOUR-CAPACITY-GUID"
+  subscription_id:
+    description: "Target Azure subscription id"
+    default: "REPLACE-WITH-YOUR-SUBSCRIPTION-ID"

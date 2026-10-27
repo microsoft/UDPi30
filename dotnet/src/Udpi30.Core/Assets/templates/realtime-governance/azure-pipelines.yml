@@ -1,0 +1,150 @@
+# Azure DevOps pipeline for the realtime-governance project.
+#
+# Deploys a real-time intelligence + Azure governance estate with udpi30:
+#   IoT Hub, Fabric Eventhouse, Eventstream, Real-Time Activator (Reflex),
+#   Lakehouse, Data Agent, Materialized Lake Views, Azure Key Vault, Policy,
+#   Defender for Cloud, Azure Monitor, and Microsoft Sentinel.
+#
+# Validates on every PR; deploys to staging on merge to main, then to
+# production behind a manual approval gate.
+#
+# Required variable group `udp-credentials`:
+#   AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET
+#
+# The service principal needs: Fabric workspace Contributor; Graph
+# Group/Application.ReadWrite.All (if you add entra_* resources); and rights on
+# the target Azure subscription for the azure_* resources.
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - udp.yml
+      - resources/**
+      - sql/**
+      - agent/**
+
+pr:
+  branches:
+    include:
+      - main
+
+variables:
+  - group: udp-credentials
+  - name: dotnetVersion
+    value: '9.0.x'
+
+stages:
+  # ---------------------------------------------------------------------------
+  # Validate (every PR)
+  # ---------------------------------------------------------------------------
+  - stage: Validate
+    displayName: 'Validate & Plan'
+    jobs:
+      - job: Validate
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: UseDotNet@2
+            inputs:
+              packageType: 'sdk'
+              version: $(dotnetVersion)
+
+          - task: AzureCLI@2
+            displayName: 'Install udpi30'
+            inputs:
+              azureSubscription: 'udp-service-connection'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                dotnet tool install --global udpi30
+                echo "##vso[task.prependpath]$HOME/.dotnet/tools"
+
+          - script: udpi30 validate
+            displayName: 'Validate udp.yml'
+
+          - task: AzureCLI@2
+            displayName: 'Plan dev (dry-run)'
+            inputs:
+              azureSubscription: 'udp-service-connection'  # az login context for azure_* resources
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: udpi30 plan -t dev
+            env:
+              AZURE_TENANT_ID: $(AZURE_TENANT_ID)
+              AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
+              AZURE_CLIENT_SECRET: $(AZURE_CLIENT_SECRET)
+
+  # ---------------------------------------------------------------------------
+  # Deploy to Staging (merge to main)
+  # ---------------------------------------------------------------------------
+  - stage: DeployStaging
+    displayName: 'Deploy to Staging'
+    dependsOn: Validate
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeployStaging
+        environment: staging
+        pool:
+          vmImage: 'ubuntu-latest'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: UseDotNet@2
+                  inputs:
+                    packageType: 'sdk'
+                    version: $(dotnetVersion)
+                - task: AzureCLI@2
+                  displayName: 'Deploy to staging'
+                  inputs:
+                    azureSubscription: 'udp-service-connection'
+                    scriptType: 'bash'
+                    scriptLocation: 'inlineScript'
+                    inlineScript: |
+                      dotnet tool install --global udpi30
+                      export PATH="$PATH:$HOME/.dotnet/tools"
+                      udpi30 deploy -t staging -y
+                  env:
+                    AZURE_TENANT_ID: $(AZURE_TENANT_ID)
+                    AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
+                    AZURE_CLIENT_SECRET: $(AZURE_CLIENT_SECRET)
+
+  # ---------------------------------------------------------------------------
+  # Deploy to Production (manual approval via the 'production' environment)
+  # ---------------------------------------------------------------------------
+  - stage: DeployProd
+    displayName: 'Deploy to Production'
+    dependsOn: DeployStaging
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeployProd
+        environment: production  # configure an approval gate on this environment in ADO
+        pool:
+          vmImage: 'ubuntu-latest'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: UseDotNet@2
+                  inputs:
+                    packageType: 'sdk'
+                    version: $(dotnetVersion)
+                - task: AzureCLI@2
+                  displayName: 'Deploy to production'
+                  inputs:
+                    azureSubscription: 'udp-service-connection'
+                    scriptType: 'bash'
+                    scriptLocation: 'inlineScript'
+                    inlineScript: |
+                      dotnet tool install --global udpi30
+                      export PATH="$PATH:$HOME/.dotnet/tools"
+                      udpi30 deploy -t prod -y
+                  env:
+                    AZURE_TENANT_ID: $(AZURE_TENANT_ID)
+                    AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
+                    AZURE_CLIENT_SECRET: $(AZURE_CLIENT_SECRET)

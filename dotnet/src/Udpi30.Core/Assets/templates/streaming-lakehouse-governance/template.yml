@@ -1,0 +1,20 @@
+name: streaming-lakehouse-governance
+description: "Streaming analytics: Azure Event Hub → Azure Databricks → Fabric Lakehouse + Data Agent, governed by Azure Key Vault, Policy, Defender for Cloud, Monitor, and Sentinel — ships an Azure DevOps pipeline"
+version: "1.0.0"
+author: "Unified Data Platform Deployment"
+variables:
+  project_name:
+    description: "Name of the project"
+    default: "udp-streaming"
+  capacity_id:
+    description: "Fabric capacity GUID (from Admin Portal → Capacities)"
+    default: ""
+  subscription_id:
+    description: "Target Azure subscription id"
+    default: ""
+  resource_group:
+    description: "Azure resource group for the streaming/governance resources"
+    default: "rg-streaming"
+  location:
+    description: "Azure region"
+    default: "eastus"

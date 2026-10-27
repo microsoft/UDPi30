@@ -1,0 +1,152 @@
+# Unified Data Platform Deployment — Azure DevOps YAML Pipeline
+#
+# This pipeline validates on every PR and deploys on merge to main.
+#
+# Required variable groups:
+#   udp-credentials:
+#     AZURE_TENANT_ID
+#     AZURE_CLIENT_ID
+#     AZURE_CLIENT_SECRET
+#
+# Optional:
+#   Configure Azure DevOps Environments for 'staging' and 'production'
+#   with manual approval gates.
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - udp.yml
+      - resources/**
+      - notebooks/**
+      - pipelines/**
+      - sql/**
+      - semantic_model/**
+      - reports/**
+      - agent/**
+
+pr:
+  branches:
+    include:
+      - main
+
+variables:
+  - group: udp-credentials
+  - name: dotnetVersion
+    value: '9.0.x'
+
+stages:
+  # ---------------------------------------------------------------------------
+  # Validate
+  # ---------------------------------------------------------------------------
+  - stage: Validate
+    displayName: 'Validate Deployment'
+    jobs:
+      - job: ValidateDeployment
+        displayName: 'Validate & Plan'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: UseDotNet@2
+            inputs:
+              packageType: 'sdk'
+              version: $(dotnetVersion)
+
+          - script: |
+              dotnet tool install --global udpi30
+              echo "##vso[task.prependpath]$HOME/.dotnet/tools"
+            displayName: 'Install udpi30'
+
+          - script: udpi30 validate
+            displayName: 'Validate udp.yml'
+
+          - script: udpi30 plan -t dev
+            displayName: 'Plan dev deployment (dry-run)'
+            env:
+              AZURE_TENANT_ID: $(AZURE_TENANT_ID)
+              AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
+              AZURE_CLIENT_SECRET: $(AZURE_CLIENT_SECRET)
+
+  # ---------------------------------------------------------------------------
+  # Deploy to Staging
+  # ---------------------------------------------------------------------------
+  - stage: DeployStaging
+    displayName: 'Deploy to Staging'
+    dependsOn: Validate
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeployToStaging
+        displayName: 'Deploy to Staging'
+        environment: staging
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+
+                - task: UseDotNet@2
+                  inputs:
+                    packageType: 'sdk'
+                    version: $(dotnetVersion)
+
+                - script: |
+                    dotnet tool install --global udpi30
+                    echo "##vso[task.prependpath]$HOME/.dotnet/tools"
+                  displayName: 'Install udpi30'
+
+                - script: udpi30 plan -t staging
+                  displayName: 'Plan staging deployment'
+                  env:
+                    AZURE_TENANT_ID: $(AZURE_TENANT_ID)
+                    AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
+                    AZURE_CLIENT_SECRET: $(AZURE_CLIENT_SECRET)
+
+                - script: udpi30 deploy -t staging -y
+                  displayName: 'Deploy to staging'
+                  env:
+                    AZURE_TENANT_ID: $(AZURE_TENANT_ID)
+                    AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
+                    AZURE_CLIENT_SECRET: $(AZURE_CLIENT_SECRET)
+
+  # ---------------------------------------------------------------------------
+  # Deploy to Production (with approval gate)
+  # ---------------------------------------------------------------------------
+  - stage: DeployProd
+    displayName: 'Deploy to Production'
+    dependsOn: DeployStaging
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeployToProduction
+        displayName: 'Deploy to Production'
+        environment: production  # Configure approval gates in ADO
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+
+                - task: UseDotNet@2
+                  inputs:
+                    packageType: 'sdk'
+                    version: $(dotnetVersion)
+
+                - script: |
+                    dotnet tool install --global udpi30
+                    echo "##vso[task.prependpath]$HOME/.dotnet/tools"
+                  displayName: 'Install udpi30'
+
+                - script: udpi30 plan -t prod
+                  displayName: 'Plan production deployment'
+                  env:
+                    AZURE_TENANT_ID: $(AZURE_TENANT_ID)
+                    AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
+                    AZURE_CLIENT_SECRET: $(AZURE_CLIENT_SECRET)
+
+                - script: udpi30 deploy -t prod -y
+                  displayName: 'Deploy to production'
+                  env:
+                    AZURE_TENANT_ID: $(AZURE_TENANT_ID)
+                    AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
+                    AZURE_CLIENT_SECRET: $(AZURE_CLIENT_SECRET)

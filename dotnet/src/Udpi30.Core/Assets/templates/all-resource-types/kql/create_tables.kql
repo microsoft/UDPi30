@@ -1,0 +1,12 @@
+// KQL setup — referenced by resources.eventhouses.telemetry_eventhouse.
+// Runs against the eventhouse / KQL database after creation.
+
+.create table DeviceTelemetry (
+    DeviceId: string,
+    Timestamp: datetime,
+    Metric: string,
+    Value: real
+)
+
+.create table DeviceTelemetry ingestion json mapping "DeviceTelemetryMapping"
+'[{"column":"DeviceId","path":"$.deviceId"},{"column":"Timestamp","path":"$.ts"},{"column":"Metric","path":"$.metric"},{"column":"Value","path":"$.value"}]'

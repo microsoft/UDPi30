@@ -1,0 +1,1 @@
+{ "name": "domain_ontology", "entities": [{ "name": "Customer" }, { "name": "Order" }], "relationships": [{ "from": "Customer", "to": "Order", "name": "places" }] }

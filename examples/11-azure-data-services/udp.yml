@@ -1,0 +1,177 @@
+# Azure data services — every first-class azure_* service type in one deployment.
+#
+# Each service deploys as a single ARM resource via a generated, resource-group-
+# scope Bicep template. `sku`, `kind`, `properties`, and `tags` (when present)
+# are emitted into the template; supply the service-specific `properties` your
+# resource needs. For anything not covered here, use `azure_deployments` with
+# your own .bicep file.
+#
+#   udpi30 validate
+#   udpi30 deploy -t dev
+#
+# Prerequisites: `az login` with rights on the target subscription.
+
+deployment:
+  name: azure-data-services-example
+  version: "1.0.0"
+  description: "Catalogue of azure_* service resource types"
+
+azure:
+  subscription: "${var.subscription_id}"
+  location: eastus
+
+resources:
+  # The resource group the services below are deployed into.
+  azure_resource_groups:
+    rg-data-services-dev:
+      location: eastus
+      tags: { env: dev, workload: data-platform }
+
+  # --- Integration / streaming / compute ---
+  azure_data_factories:
+    adf-analytics:
+      resource_group: rg-data-services-dev
+
+  azure_databricks_workspaces:
+    dbw-analytics:
+      resource_group: rg-data-services-dev
+      sku: premium
+      properties:
+        managedResourceGroupId: "/subscriptions/${var.subscription_id}/resourceGroups/rg-dbw-managed"
+
+  azure_databricks_structured_streaming:
+    dbw-streaming:
+      resource_group: rg-data-services-dev
+      sku: premium
+      properties:
+        managedResourceGroupId: "/subscriptions/${var.subscription_id}/resourceGroups/rg-dbws-managed"
+
+  azure_event_hub_namespaces:
+    ehns-analytics:
+      resource_group: rg-data-services-dev
+      sku: Standard
+
+  azure_event_grid_topics:
+    egt-analytics:
+      resource_group: rg-data-services-dev
+
+  azure_stream_analytics_jobs:
+    asa-analytics:
+      resource_group: rg-data-services-dev
+      properties:
+        sku: { name: Standard }
+
+  azure_iot_hubs:
+    iot-analytics-hub:
+      resource_group: rg-data-services-dev
+      sku: S1
+
+  azure_logic_apps:
+    la-analytics:
+      resource_group: rg-data-services-dev
+
+  azure_functions:
+    func-analytics:
+      resource_group: rg-data-services-dev
+      kind: functionapp
+
+  # --- Storage family (each deploys as a storage account; keys must be
+  #     3-24 lowercase alphanumeric storage account names) ---
+  azure_blob_storage:
+    stblobanalytics01:
+      resource_group: rg-data-services-dev
+      sku: Standard_LRS
+      kind: StorageV2
+
+  azure_data_lake_storage:
+    stadlsanalytics01:
+      resource_group: rg-data-services-dev
+      sku: Standard_LRS
+      kind: StorageV2
+      properties:
+        isHnsEnabled: true
+
+  azure_files:
+    stfilesanalytics01:
+      resource_group: rg-data-services-dev
+      sku: Standard_LRS
+      kind: FileStorage
+
+  azure_queue_storage:
+    stqueueanalytics01:
+      resource_group: rg-data-services-dev
+      sku: Standard_LRS
+      kind: StorageV2
+
+  azure_table_storage:
+    sttableanalytics01:
+      resource_group: rg-data-services-dev
+      sku: Standard_LRS
+      kind: StorageV2
+
+  # --- Databases ---
+  # SQL Database / Managed Instance children may need a parent server; for a real
+  # deploy, name the database "<server>/<database>" or use azure_deployments.
+  azure_sql_databases:
+    analytics-sqldb:
+      resource_group: rg-data-services-dev
+      sku: S0
+
+  azure_sql_managed_instances:
+    sqlmi-analytics:
+      resource_group: rg-data-services-dev
+      sku: GP_Gen5
+
+  azure_sql_virtual_machines:
+    sqlvm-analytics:
+      resource_group: rg-data-services-dev
+
+  azure_postgresql:
+    pg-analytics:
+      resource_group: rg-data-services-dev
+      sku: Standard_D2s_v3
+
+  azure_mysql:
+    mysql-analytics:
+      resource_group: rg-data-services-dev
+      sku: Standard_D2ds_v4
+
+  azure_mariadb:
+    mariadb-analytics:
+      resource_group: rg-data-services-dev
+      sku: GP_Gen5_2
+
+  azure_cosmosdb_accounts:
+    cosmos-analytics:
+      resource_group: rg-data-services-dev
+      kind: GlobalDocumentDB
+      properties:
+        databaseAccountOfferType: Standard
+        locations:
+          - locationName: eastus
+            failoverPriority: 0
+
+  azure_redis_cache:
+    redis-analytics:
+      resource_group: rg-data-services-dev
+      properties:
+        sku: { name: Basic, family: C, capacity: 0 }
+
+  azure_data_box:
+    databox-analytics-job:
+      resource_group: rg-data-services-dev
+
+targets:
+  dev:
+    default: true
+    workspace:
+      name: azure-data-services-dev
+      capacity_id: "${var.capacity_id}"
+
+variables:
+  capacity_id:
+    description: "Your Fabric capacity GUID"
+    default: "REPLACE-WITH-YOUR-CAPACITY-GUID"
+  subscription_id:
+    description: "Target Azure subscription id"
+    default: "REPLACE-WITH-YOUR-SUBSCRIPTION-ID"

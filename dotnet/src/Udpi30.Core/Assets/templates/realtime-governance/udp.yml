@@ -1,0 +1,103 @@
+deployment:
+  name: ${{project_name}}
+  version: "0.1.0"
+  description: "Real-time intelligence + Azure governance"
+
+workspace:
+  capacity_id: ${{capacity_id}}
+  folders_by_type: true
+
+# Azure deployment defaults (subscription + region) for the azure_* resources.
+azure:
+  subscription: ${{subscription_id}}
+  location: ${{location}}
+
+resources:
+  # ===========================================================================
+  # Azure — landing resource group + IoT ingestion + governance
+  # ===========================================================================
+  azure_resource_groups:
+    ${{resource_group}}:
+      location: ${{location}}
+      tags: { workload: realtime, managed_by: udpi30 }
+
+  # IoT Hub — device telemetry ingestion (feeds the Fabric eventstream)
+  azure_iot_hubs:
+    iot-telemetry-hub:
+      resource_group: ${{resource_group}}
+      sku: S1
+
+  # --- Governance / security / observability ---
+  azure_key_vaults:
+    kv-realtime:
+      resource_group: ${{resource_group}}
+      properties:
+        sku: { family: A, name: standard }
+        enableRbacAuthorization: true
+  azure_policy_assignments:
+    require-resource-tags:
+      resource_group: ${{resource_group}}
+  azure_defender_plans:
+    defender-servers:
+      resource_group: ${{resource_group}}
+  azure_monitor_components:
+    appi-realtime:
+      resource_group: ${{resource_group}}
+      kind: web
+      properties: { Application_Type: web }
+  azure_sentinel:
+    sentinel-onboard:
+      resource_group: ${{resource_group}}
+
+  # ===========================================================================
+  # Microsoft Fabric — real-time intelligence + analytics
+  # ===========================================================================
+  lakehouses:
+    telemetry_lakehouse:
+      description: "Curated device telemetry for analytics and ML"
+      enable_schemas: true
+
+  eventhouses:
+    telemetry_eventhouse:
+      description: "KQL store for high-volume device telemetry"
+
+  eventstreams:
+    device_stream:
+      description: "Routes IoT Hub telemetry into the eventhouse"
+      sources:
+        - type: event_hub
+          name: iot-telemetry-hub
+      destinations:
+        - type: eventhouse
+          name: telemetry_eventhouse
+
+  # Real-Time Activator (Reflex) — trigger actions on anomalous readings
+  reflex:
+    anomaly_activator:
+      description: "Alert when device telemetry crosses thresholds"
+
+  # Materialized Lake Views — incrementally-refreshed SQL views over the lakehouse
+  materialized_lake_views:
+    device_daily_summary:
+      description: "Daily per-device telemetry rollup"
+      path: ./sql/device_daily_summary.sql
+      default_lakehouse: telemetry_lakehouse
+      refresh_cron: "0 2 * * *"
+
+  # Data Agent — natural-language interface over the telemetry lakehouse
+  data_agents:
+    telemetry_agent:
+      description: "Ask questions about device telemetry in natural language"
+      sources:
+        - telemetry_lakehouse
+      instructions: ./agent/instructions.md
+
+targets:
+  dev:
+    default: true
+    workspace:
+      name: ${{project_name}}-dev
+      capacity_id: ${{capacity_id}}
+  prod:
+    workspace:
+      name: ${{project_name}}-prod

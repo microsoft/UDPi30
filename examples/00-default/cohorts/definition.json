@@ -1,0 +1,1 @@
+{ "name": "patient_cohort", "criteria": [{ "field": "age", "operator": ">=", "value": 65 }] }

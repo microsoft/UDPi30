@@ -1,0 +1,20 @@
+name: realtime-governance
+description: "Real-time intelligence (IoT → Eventhouse → Eventstream → Activator) with a lakehouse, Data Agent, and materialized lake views, governed by Azure Key Vault, Policy, Defender for Cloud, Monitor, and Sentinel — ships an Azure DevOps pipeline"
+version: "1.0.0"
+author: "Unified Data Platform Deployment"
+variables:
+  project_name:
+    description: "Name of the project"
+    default: "udp-realtime"
+  capacity_id:
+    description: "Fabric capacity GUID (from Admin Portal → Capacities)"
+    default: ""
+  subscription_id:
+    description: "Target Azure subscription id"
+    default: ""
+  resource_group:
+    description: "Azure resource group for the governance/IoT resources"
+    default: "rg-realtime"
+  location:
+    description: "Azure region"
+    default: "eastus"

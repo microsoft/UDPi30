@@ -1,0 +1,6 @@
+{
+  "title": "Operations dashboard",
+  "tiles": [
+    { "title": "Device count", "query": "DeviceTelemetry | summarize dcount(DeviceId)" }
+  ]
+}

@@ -1,0 +1,95 @@
+site_name: Unified Data Platform Deployment
+site_url: https://microsoft.github.io/UDPi30/
+site_description: Project definition for Microsoft Unified Data Platform
+repo_url: https://github.com/microsoft/UDPi30
+repo_name: microsoft/UDPi30
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: teal
+      accent: light green
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - scheme: default
+      primary: teal
+      accent: light green
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - content.code.copy
+    - content.tabs.link
+  icon:
+    repo: fontawesome/brands/github
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quickstart.md
+    - Your First Deployment: getting-started/first-deployment.md
+  - Guide:
+    - Declarative Model: guide/declarative-model.md
+    - Development Workflows: guide/development-workflows.md
+    - udp.yml Reference: guide/udp-yml.md
+    - Resource Types: guide/resource-types.md
+    - Multi-platform (Entra + Azure): guide/multi-platform.md
+    - Targets & Variables: guide/targets-variables.md
+    - Security & Permissions: guide/security.md
+    - Admin / Tenant Settings: guide/admin-settings.md
+    - Secrets Management: guide/secrets.md
+    - Templates: guide/templates.md
+    - Service Principal: guide/service-principal.md
+    - MCP Server: guide/mcp-server.md
+    - udp.yml Editor (Windows): guide/editor.md
+    - Ontology Builder (Windows): guide/ontology-builder.md
+    - Migrate from Terraform: guide/migrate-from-terraform.md
+    - Migrate from fabric-cicd: guide/migrate-from-fabric-cicd.md
+  - Reference:
+    - Environment Variables: reference/environment-variables.md
+  - CLI Reference:
+    - Commands: cli/commands.md
+  - CI/CD:
+    - Overview: cicd/overview.md
+    - GitHub Actions: cicd/github-actions.md
+    - Azure DevOps: cicd/azure-devops.md
+  - Troubleshooting: troubleshooting.md
+  - Advanced:
+    - State Management: advanced/state.md
+    - Drift Detection: advanced/drift.md
+    - Policy Enforcement: advanced/policies.md
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
+  - admonition
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/microsoft/UDPi30
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/udpi30/

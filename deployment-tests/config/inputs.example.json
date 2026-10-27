@@ -1,0 +1,43 @@
+{
+  "$schema": "./inputs.schema.json",
+  "schemaVersion": "1.0",
+  "values": {
+    "capacity_id": "00000000-0000-0000-0000-000000000000",
+    "subscription_id": "00000000-0000-0000-0000-000000000000",
+    "tenant_id": "00000000-0000-0000-0000-000000000000",
+    "adls_connection_id": "00000000-0000-0000-0000-000000000000",
+    "data_eng_group_id": "00000000-0000-0000-0000-000000000000",
+    "contractors_group_id": "00000000-0000-0000-0000-000000000000",
+    "bi_admins_group_id": "00000000-0000-0000-0000-000000000000"
+  },
+  "principalMappings": {
+    "sg-data-engineering": "00000000-0000-0000-0000-000000000000",
+    "sg-analysts": "00000000-0000-0000-0000-000000000000",
+    "sg-platform-engineering": "00000000-0000-0000-0000-000000000000",
+    "sg-business-analysts": "00000000-0000-0000-0000-000000000000",
+    "sg-data-science": "00000000-0000-0000-0000-000000000000",
+    "sg-data-eng": "00000000-0000-0000-0000-000000000000"
+  },
+  "textReplacements": {
+    "adls://datalake.dfs.core.windows.net/sales/current": "adls://replace/account/container/path",
+    "s3://partner-bucket/shared-data": "s3://replace/bucket/path",
+    "adls://contosodatalake/sales/2024": "adls://replace/account/container/path",
+    "s3://partner-data-bucket/daily-feed": "s3://replace/bucket/path",
+    "onelake://shared-workspace-id/shared-lakehouse-id/Tables/dim_customer": "onelake://replace/workspace/lakehouse/Tables/table",
+    "https://contosodatalake.dfs.core.windows.net": "https://replace.dfs.core.windows.net"
+  },
+  "assetOverlays": {
+    "08": [
+      {
+        "source": "C:/replace/with/all-resource-types-assets",
+        "destination": "."
+      }
+    ]
+  },
+  "exampleOverrides": {
+    "08": { "enabled": true, "target": "dev", "allowMutation": false },
+    "09": { "enabled": true, "target": "prod", "allowMutation": false },
+    "11": { "enabled": true, "target": "dev", "allowMutation": false },
+    "12": { "enabled": true, "target": "dev", "allowMutation": false }
+  }
+}

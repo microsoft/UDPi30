@@ -1,0 +1,10 @@
+type Sale {
+  order_id: ID!
+  order_date: String
+  customer_id: String
+  total_amount: Float
+}
+
+type Query {
+  sales: [Sale]
+}

@@ -1,0 +1,6 @@
+{
+  "name": "dbt_transform",
+  "project": "udp_default",
+  "profile": "fabric",
+  "targets": ["dev", "prod"]
+}

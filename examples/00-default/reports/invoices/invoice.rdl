@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Report xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition">
+  <AutoRefresh>0</AutoRefresh>
+  <Body>
+    <Height>1in</Height>
+  </Body>
+  <Width>6.5in</Width>
+  <Page />
+</Report>

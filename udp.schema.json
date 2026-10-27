@@ -1,0 +1,506 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/microsoft/UDPi30/udp.schema.json",
+  "title": "Unified Data Platform Deployment",
+  "description": "IaC project definition for Microsoft Unified Data Platform.",
+  "type": "object",
+  "required": ["deployment"],
+  "properties": {
+    "deployment": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "description": "Deployment name (identifier)" },
+        "version": { "type": "string", "default": "0.1.0" },
+        "description": { "type": "string" }
+      }
+    },
+    "workspace": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "workspace_id": { "type": "string" },
+        "capacity": { "type": "string" },
+        "capacity_id": { "type": "string" },
+        "description": { "type": "string" },
+        "folders_by_type": {
+          "type": "boolean",
+          "description": "Organize deployed items into Fabric workspace folders by type (Notebooks, Pipelines, Lakehouses, Reports, Models, Databases, ...). A per-resource 'folder' overrides the type folder."
+        }
+      }
+    },
+    "include": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Additional YAML files to merge into the deployment"
+    },
+    "variables": {
+      "type": "object",
+      "additionalProperties": {
+        "oneOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "properties": {
+              "description": { "type": "string" },
+              "default": { "type": "string" }
+            }
+          }
+        ]
+      }
+    },
+    "resources": {
+      "type": "object",
+      "properties": {
+        "lakehouses": { "$ref": "#/definitions/resourceMap_lakehouse" },
+        "notebooks": { "$ref": "#/definitions/resourceMap_notebook" },
+        "pipelines": { "$ref": "#/definitions/resourceMap_pipeline" },
+        "warehouses": { "$ref": "#/definitions/resourceMap_warehouse" },
+        "semantic_models": { "$ref": "#/definitions/resourceMap_semantic_model" },
+        "reports": { "$ref": "#/definitions/resourceMap_report" },
+        "data_agents": { "$ref": "#/definitions/resourceMap_data_agent" },
+        "environments": { "$ref": "#/definitions/resourceMap_environment" },
+        "eventhouses": { "$ref": "#/definitions/resourceMap_eventhouse" },
+        "eventstreams": { "$ref": "#/definitions/resourceMap_eventstream" },
+        "entra_groups": { "$ref": "#/definitions/resourceMap_entra_group" },
+        "entra_apps": { "$ref": "#/definitions/resourceMap_entra_app" },
+        "azure_resource_groups": { "$ref": "#/definitions/resourceMap_azure_resource_group" },
+        "azure_storage_accounts": { "$ref": "#/definitions/resourceMap_azure_storage_account" },
+        "azure_deployments": { "$ref": "#/definitions/resourceMap_azure_deployment" },
+        "azure_data_factories": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_databricks_workspaces": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_databricks_structured_streaming": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_event_hub_namespaces": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_event_grid_topics": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_stream_analytics_jobs": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_iot_hubs": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_logic_apps": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_functions": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_blob_storage": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_data_lake_storage": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_files": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_queue_storage": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_table_storage": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_sql_databases": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_sql_managed_instances": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_sql_virtual_machines": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_postgresql": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_mysql": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_mariadb": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_cosmosdb_accounts": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_redis_cache": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_data_box": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_purview_accounts": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_key_vaults": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_policy_assignments": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_defender_plans": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_machine_learning_workspaces": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_ai_foundry": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_sentinel": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_video_indexer": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_openai": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_load_testing": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_agent_ids": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_service_groups": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_monitor_components": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_alerts": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_diagnostic_settings": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_log_analytics_workspaces": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_metrics": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_workbooks": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_activity_logs": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_database_watchers": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_network_watchers": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_dns_zones": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_network_interfaces": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_private_dns_zones": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_public_ip_addresses": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_route_tables": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_virtual_networks": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_local_network_gateways": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_peering_services": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_peerings": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_virtual_network_gateways": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_virtual_wans": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_ddos_protection_plans": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_firewalls": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_ip_groups": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_network_security_groups": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_application_gateways": { "$ref": "#/definitions/resourceMap_azure_service" },
+        "azure_application_security_groups": { "$ref": "#/definitions/resourceMap_azure_service" }
+      }
+    },
+    "azure": {
+      "type": "object",
+      "description": "Azure deployment defaults (overridable per resource).",
+      "properties": {
+        "subscription": { "type": "string", "description": "Default Azure subscription id or name" },
+        "location": { "type": "string", "description": "Default Azure region, e.g. eastus" }
+      }
+    },
+    "security": {
+      "type": "object",
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/securityRole" }
+        }
+      }
+    },
+    "connections": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/connection" }
+    },
+    "targets": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/target" }
+    },
+    "admin": {
+      "type": "object",
+      "description": "Tenant-level (admin) settings, applied tenant-wide via the Fabric Admin API. Applied only by 'udpi30 admin apply', never by 'deploy'.",
+      "properties": {
+        "tenant_settings": {
+          "type": "object",
+          "description": "Tenant settings keyed by their API settingName (e.g. PublishToWeb), not the portal display title.",
+          "additionalProperties": { "$ref": "#/definitions/tenantSetting" }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "resourceMap_entra_group": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "description": { "type": "string" },
+          "mail_nickname": { "type": "string" },
+          "security_enabled": { "type": "boolean", "default": true },
+          "mail_enabled": { "type": "boolean", "default": false },
+          "assignable_to_role": { "type": "boolean", "default": false },
+          "owners": { "type": "array", "items": { "type": "string" } },
+          "members": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "resourceMap_entra_app": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "description": { "type": "string" },
+          "sign_in_audience": { "type": "string", "default": "AzureADMyOrg" },
+          "redirect_uris": { "type": "array", "items": { "type": "string" } },
+          "identifier_uris": { "type": "array", "items": { "type": "string" } },
+          "create_service_principal": { "type": "boolean", "default": true }
+        }
+      }
+    },
+    "resourceMap_azure_resource_group": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "subscription": { "type": "string" },
+          "location": { "type": "string" },
+          "tags": { "type": "object", "additionalProperties": { "type": "string" } }
+        }
+      }
+    },
+    "resourceMap_azure_storage_account": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["resource_group"],
+        "properties": {
+          "subscription": { "type": "string" },
+          "resource_group": { "type": "string" },
+          "location": { "type": "string" },
+          "sku": { "type": "string", "default": "Standard_LRS" },
+          "kind": { "type": "string", "default": "StorageV2" },
+          "access_tier": { "type": "string", "default": "Hot" },
+          "https_only": { "type": "boolean", "default": true },
+          "tags": { "type": "object", "additionalProperties": { "type": "string" } }
+        }
+      }
+    },
+    "resourceMap_azure_deployment": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["template_file"],
+        "properties": {
+          "scope": { "type": "string", "enum": ["group", "subscription"], "default": "group" },
+          "subscription": { "type": "string" },
+          "resource_group": { "type": "string" },
+          "location": { "type": "string" },
+          "template_file": { "type": "string" },
+          "parameters": { "type": "object" }
+        }
+      }
+    },
+    "resourceMap_azure_service": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["resource_group"],
+        "properties": {
+          "subscription": { "type": "string" },
+          "resource_group": { "type": "string" },
+          "location": { "type": "string" },
+          "sku": { "type": "string", "description": "Optional SKU name" },
+          "kind": { "type": "string", "description": "Optional resource kind" },
+          "properties": { "type": "object", "description": "ARM properties bag, emitted into the generated Bicep template" },
+          "tags": { "type": "object", "additionalProperties": { "type": "string" } }
+        }
+      }
+    },
+    "tenantSetting": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": {
+        "enabled": { "type": "boolean", "description": "Enable (true) or disable (false) the setting" },
+        "delegate_to_capacity": { "type": "boolean", "description": "Allow a capacity admin to override this setting" },
+        "delegate_to_domain": { "type": "boolean", "description": "Allow a domain admin to override this setting" },
+        "delegate_to_workspace": { "type": "boolean", "description": "Allow a workspace admin to override this setting" },
+        "enabled_security_groups": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/tenantSettingSecurityGroup" }
+        },
+        "excluded_security_groups": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/tenantSettingSecurityGroup" }
+        },
+        "properties": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/tenantSettingProperty" }
+        }
+      }
+    },
+    "tenantSettingSecurityGroup": {
+      "type": "object",
+      "required": ["graph_id", "name"],
+      "properties": {
+        "graph_id": { "type": "string", "description": "Object (graph) ID of the security group" },
+        "name": { "type": "string", "description": "Display name of the security group" }
+      }
+    },
+    "tenantSettingProperty": {
+      "type": "object",
+      "required": ["name", "value"],
+      "properties": {
+        "name": { "type": "string" },
+        "value": { "type": "string" },
+        "type": {
+          "type": "string",
+          "enum": ["FreeText", "Url", "Boolean", "MailEnabledSecurityGroup", "Integer"],
+          "default": "Boolean"
+        }
+      }
+    },
+    "resourceMap_lakehouse": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "description": { "type": "string" },
+          "enable_schemas": { "type": "boolean", "default": true },
+          "shortcuts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "target"],
+              "properties": {
+                "name": { "type": "string" },
+                "target": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "resourceMap_notebook": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string" },
+          "description": { "type": "string" },
+          "environment": { "type": "string" },
+          "default_lakehouse": { "type": "string" }
+        }
+      }
+    },
+    "resourceMap_pipeline": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string" },
+          "description": { "type": "string" },
+          "schedule": {
+            "type": "object",
+            "properties": {
+              "frequency": { "type": "string", "enum": ["once", "hourly", "daily", "weekly", "monthly", "cron"] },
+              "cron": { "type": "string" },
+              "timezone": { "type": "string" }
+            }
+          },
+          "activities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "notebook": { "type": "string" },
+                "pipeline": { "type": "string" },
+                "depends_on": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          }
+        }
+      }
+    },
+    "resourceMap_warehouse": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "description": { "type": "string" },
+          "sql_scripts": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "resourceMap_semantic_model": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string" },
+          "description": { "type": "string" },
+          "default_lakehouse": { "type": "string" }
+        }
+      }
+    },
+    "resourceMap_report": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string" },
+          "description": { "type": "string" },
+          "semantic_model": { "type": "string" }
+        }
+      }
+    },
+    "resourceMap_data_agent": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "description": { "type": "string" },
+          "sources": { "type": "array", "items": { "type": "string" } },
+          "instructions": { "type": "string" },
+          "few_shot_examples": { "type": "string" },
+          "tables_in_scope": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "resourceMap_environment": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "runtime": { "type": "string" },
+          "description": { "type": "string" },
+          "libraries": { "type": "array", "items": { "type": "string" } },
+          "spark_properties": { "type": "object", "additionalProperties": { "type": "string" } }
+        }
+      }
+    },
+    "resourceMap_eventhouse": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "description": { "type": "string" },
+          "kql_scripts": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "resourceMap_eventstream": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "description": { "type": "string" },
+          "path": { "type": "string" }
+        }
+      }
+    },
+    "securityRole": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string" },
+        "entra_group": { "type": "string" },
+        "entra_user": { "type": "string" },
+        "service_principal": { "type": "string" },
+        "workspace_role": { "type": "string", "enum": ["admin", "member", "contributor", "viewer"] },
+        "onelake_roles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "tables": { "type": "array", "items": { "type": "string" } },
+              "folders": { "type": "array", "items": { "type": "string" } },
+              "permissions": { "type": "array", "items": { "type": "string", "enum": ["read", "write", "readwrite"] } }
+            }
+          }
+        }
+      }
+    },
+    "connection": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string", "enum": ["adls_gen2", "sql_server", "azure_sql", "cosmos_db", "kusto", "http", "custom"] },
+        "endpoint": { "type": "string" },
+        "database": { "type": "string" },
+        "auth_method": { "type": "string" },
+        "properties": { "type": "object", "additionalProperties": { "type": "string" } }
+      }
+    },
+    "target": {
+      "type": "object",
+      "properties": {
+        "default": { "type": "boolean" },
+        "workspace": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "workspace_id": { "type": "string" },
+            "capacity": { "type": "string" }
+          }
+        },
+        "variables": { "type": "object", "additionalProperties": { "type": "string" } },
+        "run_as": {
+          "type": "object",
+          "properties": {
+            "service_principal": { "type": "string" },
+            "user_name": { "type": "string" }
+          }
+        },
+        "security": {
+          "type": "object",
+          "properties": {
+            "roles": { "type": "array", "items": { "$ref": "#/definitions/securityRole" } }
+          }
+        }
+      }
+    }
+  }
+}

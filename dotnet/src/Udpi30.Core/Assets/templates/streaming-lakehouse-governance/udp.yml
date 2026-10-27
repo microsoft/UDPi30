@@ -1,0 +1,78 @@
+deployment:
+  name: ${{project_name}}
+  version: "0.1.0"
+  description: "Streaming analytics (Event Hub → Databricks → Lakehouse) + Azure governance"
+
+azure:
+  subscription: ${{subscription_id}}
+  location: ${{location}}
+
+resources:
+  # ===========================================================================
+  # Azure — landing group, streaming ingest + processing, governance
+  # ===========================================================================
+  azure_resource_groups:
+    ${{resource_group}}:
+      location: ${{location}}
+      tags: { workload: streaming, managed_by: udpi30 }
+
+  # Event Hub — streaming ingestion
+  azure_event_hub_namespaces:
+    ehns-streaming:
+      resource_group: ${{resource_group}}
+      sku: Standard
+
+  # Azure Databricks — stream processing / transformation
+  azure_databricks_workspaces:
+    dbw-streaming:
+      resource_group: ${{resource_group}}
+      sku: premium
+      properties:
+        managedResourceGroupId: "/subscriptions/${{subscription_id}}/resourceGroups/${{resource_group}}-dbw-managed"
+
+  # --- Governance / security / observability ---
+  azure_key_vaults:
+    kv-streaming:
+      resource_group: ${{resource_group}}
+      properties:
+        sku: { family: A, name: standard }
+        enableRbacAuthorization: true
+  azure_policy_assignments:
+    require-resource-tags:
+      resource_group: ${{resource_group}}
+  azure_defender_plans:
+    defender-servers:
+      resource_group: ${{resource_group}}
+  azure_monitor_components:
+    appi-streaming:
+      resource_group: ${{resource_group}}
+      kind: web
+      properties: { Application_Type: web }
+  azure_sentinel:
+    sentinel-onboard:
+      resource_group: ${{resource_group}}
+
+  # ===========================================================================
+  # Microsoft Fabric — curated store + natural-language access
+  # ===========================================================================
+  lakehouses:
+    streaming_lakehouse:
+      description: "Curated landing zone for processed stream data"
+      enable_schemas: true
+
+  data_agents:
+    streaming_agent:
+      description: "Ask questions about the streaming dataset in natural language"
+      sources:
+        - streaming_lakehouse
+      instructions: ./agent/instructions.md
+
+targets:
+  dev:
+    default: true
+    workspace:
+      name: ${{project_name}}-dev
+      capacity_id: ${{capacity_id}}
+  prod:
+    workspace:
+      name: ${{project_name}}-prod

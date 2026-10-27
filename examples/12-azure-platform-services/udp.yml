@@ -1,0 +1,182 @@
+# Azure platform services — governance, security, AI, monitoring, and networking.
+#
+# Every type below deploys as a single ARM resource via a generated, resource-
+# group-scope Bicep template. Supply each resource's service-specific `properties`
+# for a real deploy; some types are scope-bound (diagnostic settings, activity
+# logs, policy assignments) — for those, prefer `azure_deployments` with your own
+# template, or treat these entries as the inventory/contract.
+#
+#   udpi30 validate
+#   udpi30 deploy -t dev
+#
+# Prerequisites: `az login` with rights on the target subscription.
+
+deployment:
+  name: azure-platform-services-example
+  version: "1.0.0"
+  description: "Catalogue of governance, security, AI, monitoring, and networking azure_* types"
+
+azure:
+  subscription: "${var.subscription_id}"
+  location: eastus
+
+resources:
+  azure_resource_groups:
+    rg-platform-dev:
+      location: eastus
+      tags: { env: dev, workload: platform }
+
+  # --- Governance / security / AI ---
+  azure_purview_accounts:
+    purview-analytics:
+      resource_group: rg-platform-dev
+  azure_key_vaults:
+    kv-platform-dev:
+      resource_group: rg-platform-dev
+      properties:
+        sku: { family: A, name: standard }
+        tenantId: "${var.tenant_id}"
+        enableRbacAuthorization: true
+  azure_policy_assignments:
+    require-tags:
+      resource_group: rg-platform-dev
+  azure_defender_plans:
+    defender-servers:
+      resource_group: rg-platform-dev
+  azure_machine_learning_workspaces:
+    mlw-analytics:
+      resource_group: rg-platform-dev
+  azure_ai_foundry:
+    foundry-hub:
+      resource_group: rg-platform-dev
+      kind: Hub
+  azure_sentinel:
+    sentinel-onboard:
+      resource_group: rg-platform-dev
+  azure_video_indexer:
+    vi-analytics:
+      resource_group: rg-platform-dev
+  azure_openai:
+    aoai-analytics:
+      resource_group: rg-platform-dev
+      kind: OpenAI
+      sku: S0
+  azure_load_testing:
+    lt-analytics:
+      resource_group: rg-platform-dev
+  azure_agent_ids:
+    agent-ingest:
+      resource_group: rg-platform-dev
+  azure_service_groups:
+    sg-platform:
+      resource_group: rg-platform-dev
+
+  # --- Monitoring / observability ---
+  azure_monitor_components:
+    appi-analytics:
+      resource_group: rg-platform-dev
+      kind: web
+      properties: { Application_Type: web }
+  azure_alerts:
+    alert-high-cpu:
+      resource_group: rg-platform-dev
+  azure_diagnostic_settings:
+    diag-default:
+      resource_group: rg-platform-dev
+  azure_log_analytics_workspaces:
+    law-analytics:
+      resource_group: rg-platform-dev
+      properties: { sku: { name: PerGB2018 } }
+  azure_metrics:
+    dcr-metrics:
+      resource_group: rg-platform-dev
+  azure_workbooks:
+    wb-overview:
+      resource_group: rg-platform-dev
+  azure_activity_logs:
+    activity-export:
+      resource_group: rg-platform-dev
+  azure_database_watchers:
+    dbw-sql:
+      resource_group: rg-platform-dev
+
+  # --- Networking ---
+  azure_network_watchers:
+    nw-eastus:
+      resource_group: rg-platform-dev
+  azure_dns_zones:
+    contoso.example.com:
+      resource_group: rg-platform-dev
+      location: global
+  azure_network_interfaces:
+    nic-app01:
+      resource_group: rg-platform-dev
+  azure_private_dns_zones:
+    privatelink.blob.core.windows.net:
+      resource_group: rg-platform-dev
+      location: global
+  azure_public_ip_addresses:
+    pip-app:
+      resource_group: rg-platform-dev
+      sku: Standard
+      properties: { publicIPAllocationMethod: Static }
+  azure_route_tables:
+    rt-hub:
+      resource_group: rg-platform-dev
+  azure_virtual_networks:
+    vnet-hub:
+      resource_group: rg-platform-dev
+      properties:
+        addressSpace: { addressPrefixes: ["10.0.0.0/16"] }
+  azure_local_network_gateways:
+    lng-onprem:
+      resource_group: rg-platform-dev
+  azure_peering_services:
+    peersvc-isp:
+      resource_group: rg-platform-dev
+  azure_peerings:
+    peer-isp:
+      resource_group: rg-platform-dev
+  azure_virtual_network_gateways:
+    vng-hub:
+      resource_group: rg-platform-dev
+  azure_virtual_wans:
+    vwan-global:
+      resource_group: rg-platform-dev
+      properties: { type: Standard }
+  azure_ddos_protection_plans:
+    ddos-hub:
+      resource_group: rg-platform-dev
+  azure_firewalls:
+    afw-hub:
+      resource_group: rg-platform-dev
+  azure_ip_groups:
+    ipg-trusted:
+      resource_group: rg-platform-dev
+  azure_network_security_groups:
+    nsg-app:
+      resource_group: rg-platform-dev
+  azure_application_gateways:
+    agw-web:
+      resource_group: rg-platform-dev
+  azure_application_security_groups:
+    asg-web:
+      resource_group: rg-platform-dev
+
+targets:
+  dev:
+    default: true
+    workspace:
+      name: azure-platform-services-dev
+      capacity_id: "${var.capacity_id}"
+
+variables:
+  capacity_id:
+    description: "Your Fabric capacity GUID"
+    default: "REPLACE-WITH-YOUR-CAPACITY-GUID"
+  subscription_id:
+    description: "Target Azure subscription id"
+    default: "REPLACE-WITH-YOUR-SUBSCRIPTION-ID"
+  tenant_id:
+    description: "Entra tenant id (for Key Vault)"
+    default: "REPLACE-WITH-YOUR-TENANT-ID"

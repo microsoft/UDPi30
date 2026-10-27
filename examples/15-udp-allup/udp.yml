@@ -1,0 +1,849 @@
+# =============================================================================
+# 15 — Unified Data Platform: All-Up conceptual model
+#
+# One udp.yml that expresses every box in the "Unified Data Platform –
+# Conceptual Model" diagram, left to right and top to bottom:
+#
+#   Data Sources -> Data Movement (Ingest) -> Store -> Process -> Serve
+#     -> Enrich (AI & Agents) -> Consumers
+#   + OneLake / Orchestrate & Deploy / Secure & Connect / Platform Optics
+#   + Microsoft Purview / Microsoft Azure
+#
+# Each section below carries a "Diagram:" comment naming the box(es) it covers.
+# Boxes that udpi30 cannot declare (data-plane or portal-only features) are
+# listed in "Not expressible in udp.yml" at the end of the file.
+#
+# Placeholders are zero-GUIDs / REPLACE-WITH-* so the file validates unchanged
+# and fails loudly if deployed unchanged.
+#   udpi30 validate --skip-connection-check --strict
+#   udpi30 plan -t dev
+# =============================================================================
+
+deployment:
+  name: udp-allup
+  version: "1.0.0"
+  description: "Unified Data Platform all-up: ingest, store, process, serve, enrich, govern and operate"
+
+workspace:
+  name: udp-allup
+  capacity_id: "${var.capacity_id}"
+  description: "Unified Data Platform all-up (${deployment.name} v${deployment.version})"
+  folders_by_type: true
+  # Diagram: Orchestrate & Deploy > Git Integration
+  git_integration:
+    provider: github
+    organization: "${var.git_organization}"
+    repository: "${var.git_repository}"
+    branch: main
+    directory: /examples/15-udp-allup/items
+
+variables:
+  environment: "dev"
+  capacity_id:
+    description: "Fabric capacity GUID"
+    default: "00000000-0000-0000-0000-000000000000"
+  subscription_id:
+    description: "Target Azure subscription id"
+    default: "00000000-0000-0000-0000-000000000000"
+  tenant_id:
+    description: "Microsoft Entra tenant id"
+    default: "00000000-0000-0000-0000-000000000000"
+  git_organization:
+    description: "GitHub organization that owns the workspace repository"
+    default: "REPLACE-WITH-YOUR-GITHUB-ORG"
+  git_repository:
+    description: "Repository connected to the workspace"
+    default: "REPLACE-WITH-YOUR-REPOSITORY"
+  adls_connection_id:
+    description: "Fabric connection GUID for authenticated ADLS shortcuts (empty = unauthenticated)"
+    default: ""
+  entra_owner_object_id:
+    description: "Object id of the user/service principal that owns the Entra groups and apps"
+    default: "00000000-0000-0000-0000-000000000000"
+  workspace_owner_upn:
+    description: "UPN of the workspace owner"
+    default: "owner@contoso.com"
+  fabric_admins_group_id:
+    description: "Fabric platform administrators"
+    default: "00000000-0000-0000-0000-000000000000"
+  fabric_creators_group_id:
+    description: "Users allowed to create Fabric items"
+    default: "00000000-0000-0000-0000-000000000000"
+  fabric_governance_group_id:
+    description: "Data governance stewards (labels, certification, Purview)"
+    default: "00000000-0000-0000-0000-000000000000"
+  fabric_ai_users_group_id:
+    description: "Users allowed to use Copilot and AI experiences"
+    default: "00000000-0000-0000-0000-000000000000"
+  fabric_automation_group_id:
+    description: "Service principals allowed to call Fabric/admin APIs (includes the Purview scanner)"
+    default: "00000000-0000-0000-0000-000000000000"
+
+azure:
+  subscription: "${var.subscription_id}"
+  location: eastus
+
+resources:
+
+  # ===========================================================================
+  # DATA SOURCES -> DATA MOVEMENT (INGEST) -> STORE
+  # ===========================================================================
+
+  # Diagram: Orchestrate & Deploy > Environment
+  environments:
+    spark_env:
+      description: "Shared Spark runtime with libraries"
+      runtime: "1.3"
+      libraries:
+        - semantic-link-labs
+        - delta-spark>=3.0
+      spark_properties:
+        spark.sql.shuffle.partitions: "200"
+
+  # Diagram: Store > Lakehouse (Bronze / Silver), Serve > Lakehouse (Gold),
+  #          Store > Shortcut (zero-copy) for Batch sources (Unstructured, Semi-structured, Dataset)
+  lakehouses:
+    bronze_lakehouse:
+      description: "Bronze: raw landing zone for batch sources"
+      enable_schemas: true
+      sql_endpoint_enabled: true
+      schemas:
+        - ./schemas/raw.json
+      shortcuts:
+        - name: unstructured_documents          # Data Sources > Batch > Unstructured
+          target: "adls://stdatalakedev01.dfs.core.windows.net/unstructured/documents"
+          path: Files
+          connection_id: "${var.adls_connection_id}"
+        - name: semi_structured_events          # Data Sources > Batch > Semi-structured
+          target: "adls://stdatalakedev01.dfs.core.windows.net/semistructured/events/*.json"
+          path: Files
+          connection_id: "${var.adls_connection_id}"
+          transformation:
+            type: file
+            source_format: json
+            destination_table: raw_events
+            sync: true
+            flatten: true
+        - name: dataset_sales                   # Data Sources > Batch > Dataset
+          target: "adls://stdatalakedev01.dfs.core.windows.net/datasets/sales/*.csv"
+          path: Files
+          connection_id: "${var.adls_connection_id}"
+          transformation:
+            type: file
+            source_format: csv
+            destination_table: raw_sales
+            sync: true
+    silver_lakehouse:
+      description: "Silver: cleansed and conformed data"
+      enable_schemas: true
+    gold_lakehouse:
+      description: "Gold: business-ready data served to Direct Lake and the SQL analytics endpoint"
+      enable_schemas: true
+      sql_endpoint_enabled: true
+      tables:
+        sales:
+          schema_path: ./schemas/sales.json
+          partition_by: [order_date]
+          description: "Curated sales fact table"
+        customers:
+          description: "Customer dimension"
+
+  # Diagram: Store > Data Warehouse (Bronze / Silver), Process > Stored Procedure,
+  #          Serve > Data Warehouse (Gold)
+  warehouses:
+    store_warehouse:
+      description: "Bronze / Silver warehouse with stored procedures"
+      sql_scripts:
+        - ./sql/stored_procedures.sql
+    gold_warehouse:
+      description: "Gold warehouse served to analysts"
+      sql_scripts:
+        - ./sql/create_views.sql
+
+  # Diagram: Store > SQL Database (OLTP), Serve > SQL Database (OLTP)
+  sql_databases:
+    store_oltp_db:
+      description: "Operational (OLTP) SQL database in the store layer"
+      sql_scripts:
+        - ./sql/app_schema.sql
+    serve_oltp_db:
+      description: "Operational (OLTP) SQL database serving applications"
+      sql_scripts:
+        - ./sql/app_schema.sql
+
+  # Diagram: Data Sources > Near Real-Time > Operational DBs (CDC) ->
+  #          Data Movement > Fabric Mirror -> Store > Mirror Data
+  mirrored_databases:
+    operational_mirror:
+      description: "Mirrored operational database (CDC replication)"
+      source_type: SQLServer
+      connection: sql_source
+
+  # Diagram: Store > Eventhouse, Process > KQL Update Policy
+  eventhouses:
+    telemetry_eventhouse:
+      description: "Eventhouse for streaming data"
+      kql_scripts:
+        - ./kql/create_tables.kql
+        - ./kql/update_policy.kql
+      retention_days: 365
+      cache_days: 30
+
+  kql_databases:
+    telemetry_db:
+      description: "KQL database holding raw and curated telemetry"
+      parent_eventhouse: telemetry_eventhouse
+      kql_scripts:
+        - ./kql/create_tables.kql
+        - ./kql/update_policy.kql
+
+  # Diagram: Data Movement > Eventstream (Ingest) and Process > Eventstream
+  eventstreams:
+    ingest_eventstream:
+      description: "Ingests streaming data into the eventhouse"
+      path: ./eventstreams/eventstream.json
+      sources:
+        - type: event_hub
+          name: ehns-allup
+        - type: iot_hub
+          name: iot-allup-hub
+      destinations:
+        - type: eventhouse
+          name: telemetry_eventhouse
+    process_eventstream:
+      description: "Transforms and routes streaming data in flight"
+      sources:
+        - type: event_hub
+          name: ehns-allup
+      destinations:
+        - type: eventhouse
+          name: telemetry_eventhouse
+
+  # ===========================================================================
+  # DATA MOVEMENT (INGEST): Fabric Notebook, Data Pipeline, Copy Job
+  # PROCESS: Fabric Notebook, Dataflow Gen2, User Data Functions,
+  #          Materialized Lake View, Spark Job Definition
+  # ===========================================================================
+  notebooks:
+    ingest_notebook:                            # Data Movement > Fabric Notebook
+      path: ./notebooks/ingest.py
+      description: "Ingest raw batch data into bronze"
+      environment: spark_env
+      default_lakehouse: bronze_lakehouse
+      folder: Ingest
+    process_notebook:                           # Process > Fabric Notebook
+      path: ./notebooks/transform.py
+      description: "Transform bronze/silver data into gold"
+      environment: spark_env
+      default_lakehouse: silver_lakehouse
+      folder: Process
+
+  pipelines:
+    ingest_pipeline:                            # Data Movement > Data Pipeline
+      description: "Pipeline-driven batch ingestion"
+      path: ./pipelines/manual_pipeline.json
+    orchestration_pipeline:                     # Orchestrate & Deploy > Data Pipeline
+      description: "Daily end-to-end orchestration"
+      schedule:
+        frequency: cron
+        cron: "0 6 * * *"
+        timezone: America/Chicago
+        enabled: true
+      activities:
+        - name: ingest
+          notebook: ingest_notebook
+        - name: process
+          notebook: process_notebook
+          depends_on: [ingest]
+      folder: Orchestration
+
+  copy_jobs:
+    batch_copy_job:                             # Data Movement > Copy Job
+      description: "Copy batch datasets into bronze"
+      path: ./copyjobs/copyjob.json
+
+  dataflows:
+    process_dataflow:                           # Process > Dataflow Gen2
+      description: "Low-code transformation (Dataflow Gen2)"
+      path: ./dataflows/dataflow.json
+
+  user_data_functions:
+    process_functions:                          # Process > User Data Functions
+      description: "Reusable transformation and write-back functions"
+      path: ./functions/function.json
+      runtime: python
+
+  materialized_lake_views:
+    gold_daily_sales_summary:                   # Process > Materialized Lake View
+      description: "Daily sales rollup refreshed on a schedule"
+      path: ./sql/daily_sales_summary.sql
+      default_lakehouse: gold_lakehouse
+      refresh_cron: "0 2 * * *"
+
+  spark_job_definitions:
+    process_spark_job:                          # Process > Spark Job Definition
+      description: "Scheduled Spark batch job"
+      path: ./spark_jobs/batch_job.py
+      environment: spark_env
+      default_lakehouse: silver_lakehouse
+      args: ["--mode", "full"]
+
+  # Diagram: Orchestrate & Deploy > Airflow Job
+  airflow_jobs:
+    orchestration_airflow:
+      description: "Apache Airflow orchestration job"
+      path: ./airflow/dag.py
+
+  # Diagram: Orchestrate & Deploy > Variable Library
+  variable_libraries:
+    platform_vars:
+      description: "Variables shared across the workspace"
+      variables:
+        tier: standard
+        region: eastus
+
+  # ===========================================================================
+  # SERVE
+  # ===========================================================================
+  # Diagram: Serve > GraphQL API
+  graphql_apis:
+    serve_graphql_api:
+      description: "GraphQL API over the gold lakehouse"
+      path: ./graphql/schema.graphql
+      data_source: gold_lakehouse
+
+  # Diagram: Serve > Semantic Model (Direct Lake) x2
+  semantic_models:
+    direct_lake_model:                          # over the Gold lakehouse
+      path: ./semantic_model/
+      description: "Direct Lake semantic model over the gold lakehouse"
+      default_lakehouse: gold_lakehouse
+      auto_refresh: true
+      folder: BI/Models
+    mirror_model:                               # over the mirrored database SQL analytics endpoint
+      path: ./semantic_model_mirror/
+      description: "Direct Lake semantic model over mirrored operational data"
+      folder: BI/Models
+
+  # Diagram: Serve > Power BI
+  reports:
+    power_bi_report:
+      path: ./reports/sales/
+      description: "Power BI report on the Direct Lake model"
+      semantic_model: direct_lake_model
+      folder: BI/Reports
+
+  # Diagram: Serve > Real-Time Dashboard, Activator
+  kql_dashboards:
+    real_time_dashboard:
+      description: "Real-Time Dashboard on the eventhouse"
+      path: ./kql/dashboard.json
+      data_source: telemetry_db
+  kql_querysets:
+    telemetry_queries:
+      description: "Saved KQL queries"
+      path: ./kql/queryset.json
+      data_source: telemetry_db
+  reflex:
+    activator:
+      description: "Activator rules that act on streaming conditions"
+      path: ./reflex/reflex.json
+
+  # ===========================================================================
+  # ENRICH (AI & AGENTS)
+  # Copilot in Fabric is enabled through tenant settings (see `admin:`).
+  # ===========================================================================
+  data_agents:
+    analytics_data_agent:                       # Enrich > Data Agent
+      description: "Natural-language agent over gold data"
+      sources:
+        - gold_lakehouse
+        - gold_warehouse
+        - direct_lake_model
+      instructions: ./agent/instructions.md
+      few_shot_examples: ./agent/examples.yaml
+  ontologies:
+    business_ontology:                          # Enrich > Ontology (preview)
+      description: "Business domain ontology"
+      path: ./ontology/definition.json
+      data_sources: [gold_lakehouse]
+  ml_experiments:
+    churn_experiment:
+      description: "Model training experiment"
+      path: ./ml/churn_experiment/
+  ml_models:
+    churn_model:                                # Enrich > ML Models
+      description: "Customer churn model"
+      path: ./ml/churn_model/
+      framework: sklearn
+
+  # ===========================================================================
+  # CONSUMERS
+  # Microsoft 365 Copilot, Copilot Studio and Microsoft Foundry consume the
+  # data agent; Excel and Teams consume the semantic models; custom apps use
+  # the GraphQL API through an Entra app registration.
+  # ===========================================================================
+  entra_apps:
+    app-custom-consumer:                        # Consumers > Custom Apps
+      description: "Custom application calling the GraphQL API"
+      sign_in_audience: AzureADMyOrg
+      redirect_uris: ["https://localhost:5001/signin-oidc"]
+      create_service_principal: true
+    app-udp-deploy:                             # Orchestrate & Deploy > fabric-cicd / udpi30
+      description: "CI/CD identity that runs udpi30"
+      sign_in_audience: AzureADMyOrg
+      create_service_principal: true
+    app-purview-scanner:                        # Microsoft Purview > Data Map scanner
+      description: "Service principal Microsoft Purview uses to scan Fabric / Power BI"
+      sign_in_audience: AzureADMyOrg
+      create_service_principal: true
+
+  # ===========================================================================
+  # MICROSOFT AZURE > Microsoft Entra ID
+  # ===========================================================================
+  entra_groups:
+    sg-fabric-admins:
+      description: "Fabric platform administrators"
+      security_enabled: true
+      assignable_to_role: true
+      owners: ["${var.entra_owner_object_id}"]
+    sg-fabric-creators:
+      description: "Fabric item creators"
+      security_enabled: true
+      owners: ["${var.entra_owner_object_id}"]
+    sg-fabric-governance:
+      description: "Data governance stewards"
+      security_enabled: true
+      owners: ["${var.entra_owner_object_id}"]
+    sg-fabric-ai-users:
+      description: "Copilot and AI experience users"
+      security_enabled: true
+    sg-fabric-automation:
+      description: "Service principals allowed to call Fabric admin APIs"
+      security_enabled: true
+    sg-data-engineers:
+      description: "Data engineering team"
+      security_enabled: true
+    sg-data-analysts:
+      description: "Business analysts"
+      security_enabled: true
+    sg-data-scientists:
+      description: "Data science team"
+      security_enabled: true
+
+  # ===========================================================================
+  # AZURE FOUNDATION
+  # ===========================================================================
+  azure_resource_groups:
+    rg-udp-data:
+      location: eastus
+      tags: { env: "${var.environment}", workload: udp-allup }
+    rg-udp-governance:
+      location: eastus
+      tags: { env: "${var.environment}", workload: governance }
+    rg-udp-observability:
+      location: eastus
+      tags: { env: "${var.environment}", workload: observability }
+    rg-udp-networking:
+      location: eastus
+      tags: { env: "${var.environment}", workload: networking }
+    rg-udp-ai:
+      location: eastus2
+      tags: { env: "${var.environment}", workload: ai }
+
+  # Streaming sources referenced by the eventstreams
+  azure_event_hub_namespaces:
+    ehns-allup:
+      resource_group: rg-udp-data
+      sku: Standard
+      properties:
+        isAutoInflateEnabled: true
+        maximumThroughputUnits: 4
+        disableLocalAuth: true
+  azure_iot_hubs:
+    iot-allup-hub:
+      resource_group: rg-udp-data
+      sku: S1
+      properties: { publicNetworkAccess: Enabled }
+
+  # Diagram: Consumers > Microsoft Foundry (and Copilot Studio extensions)
+  azure_ai_foundry:
+    foundry-hub:
+      resource_group: rg-udp-ai
+      kind: Hub
+      properties:
+        friendlyName: "UDP AI Foundry hub"
+        publicNetworkAccess: Disabled
+    foundry-project:
+      resource_group: rg-udp-ai
+      kind: Project
+      properties:
+        friendlyName: "UDP AI Foundry project"
+
+  # Diagram: Microsoft Azure > Azure Key Vault; Secure & Connect > Customer-Managed Keys
+  azure_key_vaults:
+    kv-udp-allup:
+      resource_group: rg-udp-governance
+      properties:
+        sku: { family: A, name: standard }
+        tenantId: "${var.tenant_id}"
+        enableRbacAuthorization: true
+        enableSoftDelete: true
+        softDeleteRetentionInDays: 90
+        enablePurgeProtection: true
+        publicNetworkAccess: Disabled
+        networkAcls: { defaultAction: Deny, bypass: AzureServices }
+
+  # Diagram: Microsoft Azure > Azure Policy
+  azure_policy_assignments:
+    require-data-owner-tag:
+      resource_group: rg-udp-data
+      properties:
+        displayName: "Require a data-owner tag on resources"
+        policyDefinitionId: "/providers/Microsoft.Authorization/policyDefinitions/871b6d14-10aa-478d-b590-94f262ecfa99"
+        enforcementMode: DoNotEnforce
+        parameters:
+          tagName: { value: data-owner }
+
+  # Diagram: Microsoft Azure > Microsoft Defender
+  azure_defender_plans:
+    VirtualMachines:
+      resource_group: rg-udp-governance
+      properties: { pricingTier: Standard, subPlan: P2 }
+
+  # Diagram: Microsoft Azure > Azure Sentinel
+  azure_sentinel:
+    sentinel-onboard:
+      resource_group: rg-udp-observability
+
+  # Diagram: Microsoft Purview (account; the data plane is configured in Purview)
+  azure_purview_accounts:
+    purview-udp-allup:
+      resource_group: rg-udp-governance
+      properties:
+        publicNetworkAccess: Disabled
+        managedResourcesPublicNetworkAccess: Disabled
+        managedEventHubState: Enabled
+        managedResourceGroupName: rg-purview-udp-allup-managed
+      tags: { env: "${var.environment}", workload: governance }
+
+  # Diagram: Platform Optics > Workspace Monitoring; Microsoft Azure > Azure Monitor
+  azure_log_analytics_workspaces:
+    law-udp-allup:
+      resource_group: rg-udp-observability
+      properties:
+        sku: { name: PerGB2018 }
+        retentionInDays: 90
+  azure_monitor_components:
+    appi-udp-allup:
+      resource_group: rg-udp-observability
+      kind: web
+      properties:
+        Application_Type: web
+        IngestionMode: LogAnalytics
+        WorkspaceResourceId: "/subscriptions/${var.subscription_id}/resourceGroups/rg-udp-observability/providers/Microsoft.OperationalInsights/workspaces/law-udp-allup"
+  azure_alerts:
+    alert-capacity-cpu:                         # Platform Optics > Capacity Metrics / Fabric Capacity
+      resource_group: rg-udp-observability
+      location: global
+      properties:
+        description: "Capacity CPU above 80% for 15 minutes"
+        severity: 2
+        enabled: true
+        scopes: ["/subscriptions/${var.subscription_id}/resourceGroups/rg-udp-data"]
+        evaluationFrequency: PT5M
+        windowSize: PT15M
+        criteria:
+          "odata.type": Microsoft.Azure.Monitor.MultipleResourceMultipleMetricCriteria
+          allOf:
+            - name: HighCpu
+              metricName: Percentage CPU
+              metricNamespace: Microsoft.Compute/virtualMachines
+              operator: GreaterThan
+              threshold: 80
+              timeAggregation: Average
+              criterionType: StaticThresholdCriterion
+  azure_diagnostic_settings:
+    diag-purview:
+      resource_group: rg-udp-governance
+      properties:
+        workspaceId: "/subscriptions/${var.subscription_id}/resourceGroups/rg-udp-observability/providers/Microsoft.OperationalInsights/workspaces/law-udp-allup"
+        logs:
+          - categoryGroup: allLogs
+            enabled: true
+        metrics:
+          - category: AllMetrics
+            enabled: true
+
+  # Diagram: Secure & Connect > VNet Gateway, Private Link, Managed Private Endpoint
+  azure_virtual_networks:
+    vnet-udp-allup:
+      resource_group: rg-udp-networking
+      properties:
+        addressSpace: { addressPrefixes: ["10.20.0.0/16"] }
+        subnets:
+          - name: snet-private-endpoints
+            properties: { addressPrefix: "10.20.1.0/24" }
+          - name: snet-vnet-data-gateway
+            properties: { addressPrefix: "10.20.2.0/24" }
+  azure_private_dns_zones:
+    privatelink.purview.azure.com:
+      resource_group: rg-udp-networking
+      location: global
+    privatelink.purviewstudio.azure.com:
+      resource_group: rg-udp-networking
+      location: global
+    privatelink.vaultcore.azure.net:
+      resource_group: rg-udp-networking
+      location: global
+    privatelink.servicebus.windows.net:
+      resource_group: rg-udp-networking
+      location: global
+    privatelink.dfs.core.windows.net:
+      resource_group: rg-udp-networking
+      location: global
+  azure_network_security_groups:
+    nsg-udp-allup:
+      resource_group: rg-udp-networking
+
+# -----------------------------------------------------------------------------
+# security — Secure & Connect > Workspace Roles, and OneLake > OneLake Security
+# -----------------------------------------------------------------------------
+security:
+  roles:
+    - name: platform-admins
+      entra_group: sg-fabric-admins
+      workspace_role: admin
+    - name: data-engineers
+      entra_group: sg-data-engineers
+      workspace_role: contributor
+      onelake_roles:
+        - tables: [sales, customers]
+          folders: ["/Files/raw"]
+          permissions: [readwrite]
+    - name: data-scientists
+      entra_group: sg-data-scientists
+      workspace_role: contributor
+      onelake_roles:
+        - tables: [sales]
+          permissions: [read]
+    - name: analysts
+      entra_group: sg-data-analysts
+      workspace_role: viewer
+      onelake_roles:
+        - tables: ["*"]
+          permissions: [read]
+    - name: ci-cd-deployer
+      service_principal: app-udp-deploy
+      workspace_role: admin
+    - name: purview-scanner
+      service_principal: app-purview-scanner
+      workspace_role: viewer
+    - name: workspace-owner
+      entra_user: "${var.workspace_owner_upn}"
+      workspace_role: admin
+
+# -----------------------------------------------------------------------------
+# connections — Secure & Connect > On-prem Gateway (operational database CDC source)
+# -----------------------------------------------------------------------------
+connections:
+  adls_source:
+    type: adls_gen2
+    endpoint: "https://stdatalakedev01.dfs.core.windows.net"
+    auth_method: managed_identity
+  sql_source:
+    type: sql_server
+    endpoint: "sql-onprem.contoso.com"
+    database: salesdb
+    auth_method: service_principal
+    connection_string_var: UDP_SQL_SOURCE_CONNECTION_STRING
+
+notifications:
+  on_failure:
+    - type: teams
+      webhook: "${secret.UDP_TEAMS_ALERTS_WEBHOOK}"
+      message: "FAILED: {deployment.name} v{deployment.version} deployment to {target}"
+
+state:
+  backend: local
+
+# -----------------------------------------------------------------------------
+# admin — TENANT-WIDE Fabric settings. NEVER applied by `deploy`; only by
+# `udpi30 admin apply`. Review with `udpi30 admin plan` before applying.
+# -----------------------------------------------------------------------------
+admin:
+  tenant_settings:
+    # --- Enrich > Copilot in Fabric ---
+    EnableAOAI:
+      enabled: true
+      delegate_to_capacity: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_ai_users_group_id}"
+          name: "Fabric AI Users"
+    AllowSendAOAIDataToOtherRegions:
+      enabled: false
+      delegate_to_capacity: false
+    AllowStoreAOAIDataInOtherRegions:
+      enabled: false
+    # --- Enrich > Ontology (preview) ---
+    OntologyPreview:
+      enabled: true
+      delegate_to_capacity: false
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+    # --- Serve > Activator ---
+    ShowActivatorEntryPointsTenantSwitch:
+      enabled: true
+    # --- Consumers > Excel and Teams ---
+    ExportToExcelSetting:
+      enabled: true
+    OnPremAnalyzeInExcel:
+      enabled: true
+    ShareToTeamsTenant:
+      enabled: true
+    # --- OneLake > OneLake Catalog, OneLake Security ---
+    OneLakeCatalogSubItemDiscovery:
+      enabled: true
+    OneLakeFileExplorer:
+      enabled: true
+    OneLakeForThirdParty:
+      enabled: true
+    AllowOneLakeUDK:
+      enabled: false
+      delegate_to_workspace: false
+    # --- OneLake > Domains ---
+    EnableReassignDataDomainSwitch:
+      enabled: true
+    # --- Orchestrate & Deploy > Git Integration ---
+    GitIntegrationTenantSwitch:
+      enabled: true
+      delegate_to_capacity: false
+      delegate_to_workspace: false
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+    GitHubTenantSettings:
+      enabled: true
+      delegate_to_capacity: false
+      delegate_to_workspace: false
+      enabled_security_groups:
+        - graph_id: "${var.fabric_creators_group_id}"
+          name: "Fabric Creators"
+    # --- Secure & Connect > Sensitivity Labels, Microsoft Purview ---
+    EimInformationProtectionEdit:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_governance_group_id}"
+          name: "Fabric Governance"
+    EimInformationProtectionDownstreamInheritanceSetting:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_governance_group_id}"
+          name: "Fabric Governance"
+    BlockProtectedLabelSharingToEntireOrg:
+      enabled: true
+    DataSecurityForAIInteractions:
+      enabled: true
+    PolicySetTenantSwitch:
+      enabled: true
+      delegate_to_capacity: false
+      enabled_security_groups:
+        - graph_id: "${var.fabric_governance_group_id}"
+          name: "Fabric Governance"
+    # --- Secure & Connect > On-prem Gateway, VNet Gateway, Private Link ---
+    AADSSOForGateway:
+      enabled: true
+    AADSSOForVnetGateway:
+      enabled: true
+    AllowAccessOverPrivateLinks:
+      enabled: true
+    BlockAccessFromPublicNetworks:
+      enabled: false                           # keep off until private networking is verified
+    WorkspaceBlockInboundAccess:
+      enabled: true
+    # --- Platform Optics > Monitoring Hub, Workspace Monitoring, Unified Admin Monitoring ---
+    PlatformMonitoringTenantSetting:
+      enabled: true
+      delegate_to_capacity: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_admins_group_id}"
+          name: "Fabric Administrators"
+    MonitoringTenant:
+      enabled: true
+      delegate_to_capacity: false
+      enabled_security_groups:
+        - graph_id: "${var.fabric_admins_group_id}"
+          name: "Fabric Administrators"
+    AdminApisIncludeDetailedMetadata:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_automation_group_id}"
+          name: "Fabric Automation"
+    AllowServicePrincipalsUseReadAdminAPIs:
+      enabled: true
+      enabled_security_groups:
+        - graph_id: "${var.fabric_automation_group_id}"
+          name: "Fabric Automation"
+    # --- Platform Optics > Capacity Metrics ---
+    AllowCapacityMetricsReportUserMask:
+      enabled: false
+    UsageMetrics:
+      enabled: true
+
+# -----------------------------------------------------------------------------
+# targets — Orchestrate & Deploy > Deployment Pipelines (dev -> staging -> prod,
+# promoted with `udpi30 promote`) and fabric-cicd (udpi30 itself)
+# -----------------------------------------------------------------------------
+targets:
+  dev:
+    default: true
+    workspace:
+      name: udp-allup-dev
+      capacity_id: "${var.capacity_id}"
+      description: "Development workspace"
+      folders_by_type: true
+    variables:
+      environment: dev
+  staging:
+    workspace:
+      name: udp-allup-staging
+      capacity_id: "${var.capacity_id}"
+      description: "Staging workspace"
+    variables:
+      environment: staging
+    run_as:
+      service_principal: app-udp-deploy
+  prod:
+    workspace:
+      name: udp-allup-prod
+      capacity_id: "${var.capacity_id}"
+      description: "Production workspace"
+    variables:
+      environment: prod
+    run_as:
+      service_principal: app-udp-deploy
+    deployment_strategy:
+      type: canary
+      canary_resources:
+        - ingest_notebook
+        - bronze_lakehouse
+      validation:
+        run: ingest_notebook
+        expect: success
+        timeout: 300
+
+# -----------------------------------------------------------------------------
+# Not expressible in udp.yml (configure in the named portal / API):
+#   OneLake > Domains                       Fabric admin portal / Domains API
+#   Secure & Connect > Sensitivity Labels   Microsoft Purview (tenant switches above enable them)
+#   Secure & Connect > On-prem / VNet data gateways, Managed Private Endpoints
+#                                           Fabric Gateways & workspace networking settings
+#   Platform Optics > Fabric Capacity, Fabric Cost Analysis, Disaster Recovery
+#                                           Azure portal (Microsoft.Fabric/capacities) / Cost Management
+#   Microsoft Purview > Data Quality, DLP, Unified Catalog, Data Estate Insights, Data Map, Policies
+#                                           Purview portal (data plane); the account is deployed above
+#   Microsoft Azure > Conditional Access    Microsoft Entra admin center
+#   Consumers > Microsoft 365 Copilot, Copilot Studio
+#                                           Connect to the Data Agent in each product
+# -----------------------------------------------------------------------------

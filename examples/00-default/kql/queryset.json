@@ -1,0 +1,5 @@
+{
+  "queries": [
+    { "name": "Latest readings", "query": "DeviceTelemetry | summarize arg_max(Timestamp, *) by DeviceId" }
+  ]
+}
