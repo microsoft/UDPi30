@@ -2,7 +2,7 @@
 
 [![NuGet](https://img.shields.io/nuget/v/udpi30?color=teal)](https://www.nuget.org/packages/udpi30/)
 [![.NET](https://img.shields.io/badge/.NET-9.0-512BD4)](https://dotnet.microsoft.com/)
-[![License](https://img.shields.io/github/license/microsoft/UDPi30)](https://github.com/microsoft/UDPi30/LICENSE)
+[![License](https://img.shields.io/github/license/microsoft/UDPi30)](https://github.com/microsoft/UDPi30/blob/main/LICENSE)
 [![Tests](https://img.shields.io/github/actions/workflow/status/microsoft/UDPi30/ci.yml?label=tests)](https://github.com/microsoft/UDPi30/actions)
 [![Docs](https://img.shields.io/badge/docs-microsoft.github.io-teal)](https://microsoft.github.io/UDPi30/)
 
