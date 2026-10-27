@@ -1,0 +1,160 @@
+name: Publish NuGet
+
+# Publishes the udpi30 and udpi30-mcp .NET tool packages to nuget.org using OIDC
+# Trusted Publishing, so no long-lived API key is stored.
+#
+# One-time setup on nuget.org (per package owner):
+#   Username -> Trusted Publishing -> add a policy with
+#     Repository Owner: microsoft
+#     Repository:       UDPi30
+#     Workflow File:    nuget-publish.yml      (file name only)
+#     Environment:      nuget
+# Then create a GitHub environment named "nuget" (add required reviewers if desired)
+# and add the environment or repository secret NUGET_USER = your nuget.org profile
+# name (NOT your email).
+#
+# Triggers:
+#   - Publishing a GitHub Release tagged vX.Y.Z publishes that version.
+#   - Manual dispatch runs the same build, test, and pack steps. Publishing happens
+#     only when "dry_run" is false.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (for example 1.15.0). Blank uses the version in Directory.Build.props."
+        required: false
+        type: string
+      dry_run:
+        description: "Build, test, and pack without pushing to nuget.org."
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nuget-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+
+jobs:
+  build:
+    name: Build, test, and pack
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.ver.outputs.value }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Resolve version
+        id: ver
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          PROPS_VERSION=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' dotnet/Directory.Build.props | head -n1)
+          if [ "$EVENT_NAME" = "release" ]; then
+            V="${REF_NAME#v}"
+            if [ "$V" != "$PROPS_VERSION" ]; then
+              echo "::error::Release tag '$REF_NAME' does not match Directory.Build.props version '$PROPS_VERSION'."
+              exit 1
+            fi
+          elif [ -n "$INPUT_VERSION" ]; then
+            V="$INPUT_VERSION"
+          else
+            V="$PROPS_VERSION"
+          fi
+          if ! echo "$V" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?$'; then
+            echo "::error::'$V' is not a valid semantic version."
+            exit 1
+          fi
+          echo "value=$V" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: $V"
+
+      - name: Restore
+        working-directory: dotnet
+        run: |
+          dotnet restore src/Udpi30.Cli/Udpi30.Cli.csproj
+          dotnet restore src/Udpi30.Mcp/Udpi30.Mcp.csproj
+          dotnet restore tests/Udpi30.Core.Tests/Udpi30.Core.Tests.csproj
+
+      # The WinForms projects (Editor, Ontology) target Windows and are not packages.
+      - name: Test
+        working-directory: dotnet
+        run: dotnet test tests/Udpi30.Core.Tests/Udpi30.Core.Tests.csproj -c Release --no-restore
+
+      - name: Pack
+        working-directory: dotnet
+        env:
+          VERSION: ${{ steps.ver.outputs.value }}
+        run: |
+          set -euo pipefail
+          dotnet pack src/Udpi30.Cli/Udpi30.Cli.csproj -c Release --no-restore -o ../artifacts -p:Version="$VERSION"
+          dotnet pack src/Udpi30.Mcp/Udpi30.Mcp.csproj -c Release --no-restore -o ../artifacts -p:Version="$VERSION"
+          ls -l ../artifacts
+
+      - name: Verify packages
+        env:
+          VERSION: ${{ steps.ver.outputs.value }}
+        run: |
+          set -euo pipefail
+          for id in udpi30 udpi30-mcp; do
+            f="artifacts/$id.$VERSION.nupkg"
+            test -f "$f" || { echo "::error::Missing $f"; exit 1; }
+            unzip -p "$f" '*.nuspec' | grep -q "<id>$id</id>" || { echo "::error::$f has an unexpected package id"; exit 1; }
+            unzip -p "$f" '*.nuspec' | grep -q "<version>$VERSION</version>" || { echo "::error::$f has an unexpected version"; exit 1; }
+          done
+          [ "$(ls artifacts/*.nupkg | wc -l)" -eq 2 ] || { echo "::error::Expected exactly two packages"; exit 1; }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nupkgs-${{ steps.ver.outputs.value }}
+          path: artifacts/*.nupkg
+          if-no-files-found: error
+
+  publish:
+    name: Publish to nuget.org
+    needs: build
+    if: github.event_name == 'release' || github.event.inputs.dry_run == 'false'
+    runs-on: ubuntu-latest
+    environment: nuget
+    permissions:
+      id-token: write   # required for OIDC token issuance
+      contents: read
+    steps:
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: nupkgs-${{ needs.build.outputs.version }}
+          path: artifacts
+
+      - name: NuGet login (OIDC to short-lived API key)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Push
+        env:
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+        run: >
+          dotnet nuget push "artifacts/*.nupkg"
+          --api-key "$NUGET_API_KEY"
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate
