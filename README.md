@@ -5,7 +5,6 @@
 [![License](https://img.shields.io/github/license/microsoft/UDPi30)](https://github.com/microsoft/UDPi30/blob/main/LICENSE)
 [![Tests](https://img.shields.io/github/actions/workflow/status/microsoft/UDPi30/ci.yml?label=tests)](https://github.com/microsoft/UDPi30/actions)
 [![Docs](https://img.shields.io/badge/docs-microsoft.github.io-teal)](https://microsoft.github.io/UDPi30/)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/microsoft/UDPi30)
 
 > **Public Preview** — 30 Fabric item types verified against the live API; core workflows are production-ready. The Microsoft Entra and Azure resource providers are validated end-to-end in tests. See [9.2 Tested Item Types](#92-tested-item-types).
 
@@ -40,32 +39,31 @@ The project exists to close the **orchestration gap** across a Microsoft data pl
 
 ### 1.2 Key Capabilities
 
-| Capability | Description |
-|------------|-------------|
-| Declarative manifests | Define desired state in `udp.yml`; the engine reconciles each control plane to match |
-| Multi-platform | One manifest spans **Fabric** (REST), **Entra** (Microsoft Graph), and **Azure** (Bicep via `az`) |
-| Dependency management | Automatic topological sorting of resources for correct deployment order |
-| State and drift | Tracks deployed resources in `deployment-state.json`; detects out-of-band portal changes |
-| Multi-targeting | Environment-specific configuration (capacities, workspace names, variables) for dev/staging/prod |
-| Resource coverage | 46 Fabric item types + Entra groups/apps + **64 Azure service types** |
-| Reverse generation | Scan an existing workspace and produce a `udp.yml` you can customize |
-| AI agent integration | MCP server exposes 14 deployment tools to Claude Code and GitHub Copilot |
-| Deployment assurance | A PowerShell harness validates all 14 examples locally or through manual GitHub Actions and Azure DevOps pipelines |
-| Ontology authoring | A Windows application converts Fabric semantic models into editable, publishable Fabric Ontology items |
-
+| Capability            | Description                                                                                                           |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Declarative manifests | Define desired state in `udp.yml`; the engine reconciles each control plane to match                                |
+| Multi-platform        | One manifest spans **Fabric** (REST), **Entra** (Microsoft Graph), and **Azure** (Bicep via `az`) |
+| Dependency management | Automatic topological sorting of resources for correct deployment order                                               |
+| State and drift       | Tracks deployed resources in `deployment-state.json`; detects out-of-band portal changes                            |
+| Multi-targeting       | Environment-specific configuration (capacities, workspace names, variables) for dev/staging/prod                      |
+| Resource coverage     | 46 Fabric item types + Entra groups/apps + **64 Azure service types**                                           |
+| Reverse generation    | Scan an existing workspace and produce a `udp.yml` you can customize                                                |
+| AI agent integration  | MCP server exposes 14 deployment tools to Claude Code and GitHub Copilot                                              |
+| Deployment assurance  | A PowerShell harness validates all 14 examples locally or through manual GitHub Actions and Azure DevOps pipelines    |
+| Ontology authoring    | A Windows application converts Fabric semantic models into editable, publishable Fabric Ontology items                |
 
 ### 1.3 System Architecture
 
 The solution is built on **.NET 9** and divided into functional areas:
 
-| Project | Path | Responsibility |
-|---------|------|----------------|
-| **Core Engine** | `dotnet/src/Udpi30.Core` | YAML parsing, dependency resolution, planning, state; Fabric / Graph / Azure providers |
-| **CLI Tool** | `dotnet/src/Udpi30.Cli` | Command-line interface (`System.CommandLine`) for manual and automated runs |
-| **MCP Server** | `dotnet/src/Udpi30.Mcp` | Model Context Protocol server exposing deployment tools to AI agents |
-| **Editor** | `dotnet/src/Udpi30.Editor` | WinForms `udp.yml` editor (Windows) |
-| **Ontology Builder** | `dotnet/src/Udpi30.Ontology` | WinForms semantic-model-to-ontology authoring and publishing tool (Windows) |
-| **Tests** | `dotnet/tests/Udpi30.Core.Tests` | Unit and integration suite |
+| Project                    | Path                               | Responsibility                                                                         |
+| -------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------- |
+| **Core Engine**      | `dotnet/src/Udpi30.Core`         | YAML parsing, dependency resolution, planning, state; Fabric / Graph / Azure providers |
+| **CLI Tool**         | `dotnet/src/Udpi30.Cli`          | Command-line interface (`System.CommandLine`) for manual and automated runs          |
+| **MCP Server**       | `dotnet/src/Udpi30.Mcp`          | Model Context Protocol server exposing deployment tools to AI agents                   |
+| **Editor**           | `dotnet/src/Udpi30.Editor`       | WinForms `udp.yml` editor (Windows)                                                  |
+| **Ontology Builder** | `dotnet/src/Udpi30.Ontology`     | WinForms semantic-model-to-ontology authoring and publishing tool (Windows)            |
+| **Tests**            | `dotnet/tests/Udpi30.Core.Tests` | Unit and integration suite                                                             |
 
 > **CLI naming:** The standalone CLI is `udpi30`. The MCP companion is `udpi30-mcp`.
 
@@ -75,14 +73,14 @@ The solution is built on **.NET 9** and divided into functional areas:
 
 ### 2.1 Prerequisites
 
-| Category | Requirement | Minimum Version / Details |
-|----------|-------------|---------------------------|
-| System | .NET SDK | 9.0+ |
-| System | Azure CLI | 2.50+ (interactive auth; required for the Azure provider) |
-| Fabric | Capacity | Active Fabric capacity (F2 or higher) |
-| Fabric | Permissions | Admin or Contributor role on target workspace |
-| Entra | Permissions | Graph `Group.ReadWrite.All` / `Application.ReadWrite.All` (only if you declare `entra_*` resources) |
-| Azure | Permissions | Rights on the target subscription (only if you declare `azure_*` resources) |
+| Category | Requirement | Minimum Version / Details                                                                                 |
+| -------- | ----------- | --------------------------------------------------------------------------------------------------------- |
+| System   | .NET SDK    | 9.0+                                                                                                      |
+| System   | Azure CLI   | 2.50+ (interactive auth; required for the Azure provider)                                                 |
+| Fabric   | Capacity    | Active Fabric capacity (F2 or higher)                                                                     |
+| Fabric   | Permissions | Admin or Contributor role on target workspace                                                             |
+| Entra    | Permissions | Graph `Group.ReadWrite.All` / `Application.ReadWrite.All` (only if you declare `entra_*` resources) |
+| Azure    | Permissions | Rights on the target subscription (only if you declare `azure_*` resources)                             |
 
 ### 2.2 Installation
 
@@ -211,30 +209,30 @@ Deployment Plan: udp-analytics
 
 ### 3.1 Commands
 
-| Command | Description |
-|---------|-------------|
-| `udpi30 init` | Create a new project from a template |
-| `udpi30 validate` | Validate the deployment definition (schema, references, dependency chains, targets) |
-| `udpi30 plan` | Preview changes (dry-run diff against workspace state) |
-| `udpi30 deploy` | Deploy to a target workspace |
-| `udpi30 destroy` | Tear down deployment resources |
-| `udpi30 generate` | Generate `udp.yml` from an existing workspace (`--include-entra` / `--include-azure` also import deployed Entra & Azure resources) |
-| `udpi30 run <resource>` | Run a notebook or pipeline |
-| `udpi30 drift` | Detect drift between deployed state and live workspace |
-| `udpi30 bind` | Bind an existing workspace item |
-| `udpi30 admin plan` | Preview tenant (admin) setting changes against the live tenant |
-| `udpi30 admin apply` | Apply org-wide tenant settings via the Fabric Admin API |
-| `udpi30 list` | List available templates |
-| `udpi30 diag` | Diagnose environment, auth, and connectivity |
+| Command                   | Description                                                                                                                              |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `udpi30 init`           | Create a new project from a template                                                                                                     |
+| `udpi30 validate`       | Validate the deployment definition (schema, references, dependency chains, targets)                                                      |
+| `udpi30 plan`           | Preview changes (dry-run diff against workspace state)                                                                                   |
+| `udpi30 deploy`         | Deploy to a target workspace                                                                                                             |
+| `udpi30 destroy`        | Tear down deployment resources                                                                                                           |
+| `udpi30 generate`       | Generate `udp.yml` from an existing workspace (`--include-entra` / `--include-azure` also import deployed Entra & Azure resources) |
+| `udpi30 run <resource>` | Run a notebook or pipeline                                                                                                               |
+| `udpi30 drift`          | Detect drift between deployed state and live workspace                                                                                   |
+| `udpi30 bind`           | Bind an existing workspace item                                                                                                          |
+| `udpi30 admin plan`     | Preview tenant (admin) setting changes against the live tenant                                                                           |
+| `udpi30 admin apply`    | Apply org-wide tenant settings via the Fabric Admin API                                                                                  |
+| `udpi30 list`           | List available templates                                                                                                                 |
+| `udpi30 diag`           | Diagnose environment, auth, and connectivity                                                                                             |
 
 ### 3.2 Common Flags
 
-| Flag | Description |
-|------|-------------|
-| `-f, --file` | Path to `udp.yml` (default: auto-detect) |
-| `-t, --target` | Target environment (dev, staging, prod) |
-| `-y, --auto-approve` | Skip confirmation prompts |
-| `--dry-run` | Preview without making changes |
+| Flag                    | Description                                                    |
+| ----------------------- | -------------------------------------------------------------- |
+| `-f, --file`          | Path to `udp.yml` (default: auto-detect)                     |
+| `-t, --target`        | Target environment (dev, staging, prod)                        |
+| `-y, --auto-approve`  | Skip confirmation prompts                                      |
+| `--dry-run`           | Preview without making changes                                 |
 | `--continue-on-error` | (deploy) Keep created items on failure instead of rolling back |
 
 ### 3.3 MCP Server (GitHub Copilot / Claude Code)
@@ -334,10 +332,10 @@ Built-in metadata is also available: `${deployment.name}`, `${deployment.version
 
 The `SecretsResolver` replaces placeholders recursively across the manifest:
 
-| Pattern | Resolution |
-|---------|-----------|
-| `${secret.NAME}` | Resolved from the local environment (`Environment.GetEnvironmentVariable`) |
-| `${keyvault.VAULT.SECRET}` | Resolved via Azure Key Vault `SecretClient`; results cached |
+| Pattern                      | Resolution                                                                   |
+| ---------------------------- | ---------------------------------------------------------------------------- |
+| `${secret.NAME}`           | Resolved from the local environment (`Environment.GetEnvironmentVariable`) |
+| `${keyvault.VAULT.SECRET}` | Resolved via Azure Key Vault `SecretClient`; results cached                |
 
 Key Vault lookups authenticate with the same credential chain as the Fabric API (see [2.3](#23-authentication)).
 
@@ -374,11 +372,11 @@ Requires the [YAML extension](https://marketplace.visualstudio.com/items?itemNam
 
 A single `udp.yml` can declare resources on three control planes. Each resource type is tagged with a **platform** that selects the provider used to deploy it. Fabric is the default; Entra and Azure types are addressed by their own top-level keys.
 
-| Platform | Control plane | Deployed via | Scope | Auth |
-|----------|---------------|--------------|-------|------|
-| **Fabric** | Microsoft Fabric items | Fabric REST API | Workspace | Fabric token |
-| **Entra** | Directory objects | Microsoft Graph | Tenant | Graph `*.ReadWrite.All` |
-| **Azure** | ARM resources | Bicep through the `az` CLI | Subscription / resource group | `az login` |
+| Platform         | Control plane          | Deployed via                 | Scope                         | Auth                      |
+| ---------------- | ---------------------- | ---------------------------- | ----------------------------- | ------------------------- |
+| **Fabric** | Microsoft Fabric items | Fabric REST API              | Workspace                     | Fabric token              |
+| **Entra**  | Directory objects      | Microsoft Graph              | Tenant                        | Graph `*.ReadWrite.All` |
+| **Azure**  | ARM resources          | Bicep through the `az` CLI | Subscription / resource group | `az login`              |
 
 ```yaml
 azure:
@@ -420,33 +418,33 @@ See the [Multi-platform guide](https://microsoft.github.io/UDPi30/guide/multi-pl
 
 The engine is a linear five-stage pipeline:
 
-| Stage | Component | Responsibility |
-|-------|-----------|----------------|
-| 1. Load | `Loader` / `YamlFactory` | Parse `udp.yml` into a `DeploymentDefinition`; includes, variable substitution, schema validation |
-| 2. Resolve | `Resolver` | Analyze resource relationships; topological sort for creation order |
-| 3. Plan | `Planner` | Diff desired vs current state → Create / Update / Delete / No-op |
-| 4. Deploy | `Deployer` | Execute the plan, dispatching each item to its platform provider; update state |
-| 5. State | `StateManager` | Maintain `deployment-state.json` — record of truth, powering drift and idempotency |
+| Stage      | Component                    | Responsibility                                                                                        |
+| ---------- | ---------------------------- | ----------------------------------------------------------------------------------------------------- |
+| 1. Load    | `Loader` / `YamlFactory` | Parse `udp.yml` into a `DeploymentDefinition`; includes, variable substitution, schema validation |
+| 2. Resolve | `Resolver`                 | Analyze resource relationships; topological sort for creation order                                   |
+| 3. Plan    | `Planner`                  | Diff desired vs current state → Create / Update / Delete / No-op                                     |
+| 4. Deploy  | `Deployer`                 | Execute the plan, dispatching each item to its platform provider; update state                        |
+| 5. State   | `StateManager`             | Maintain `deployment-state.json` — record of truth, powering drift and idempotency                 |
 
 ### 6.2 Platform Providers
 
 Non-Fabric resources deploy through an `IResourcePlatformProvider`, selected per item by its `ResourcePlatform` tag in the resource registry:
 
-| Provider | Platform | Client |
-|----------|----------|--------|
-| `Deployer` (inline) | Fabric | `FabricClient` (REST + Admin API) |
-| `EntraResourceProvider` | Entra | `GraphClient` (Microsoft Graph) |
-| `AzureResourceProvider` | Azure | `AzureCli` (`az deployment` + Bicep) |
+| Provider                  | Platform | Client                                   |
+| ------------------------- | -------- | ---------------------------------------- |
+| `Deployer` (inline)     | Fabric   | `FabricClient` (REST + Admin API)      |
+| `EntraResourceProvider` | Entra    | `GraphClient` (Microsoft Graph)        |
+| `AzureResourceProvider` | Azure    | `AzureCli` (`az deployment` + Bicep) |
 
 The Azure provider emits generated Bicep for first-class service types (driven by an ARM-type → API-version table), or deploys an author-supplied `.bicep` via `azure_deployments`.
 
 ### 6.3 State Backends
 
-| Backend | Use Case | Status |
-|---------|----------|--------|
-| Local JSON | Single developer, local iteration | Stable |
-| Azure Blob | Team collaboration, remote locking (blob lease) | Beta |
-| OneLake / ADLS Gen2 | State stored inside the Fabric ecosystem | Beta |
+| Backend             | Use Case                                        | Status |
+| ------------------- | ----------------------------------------------- | ------ |
+| Local JSON          | Single developer, local iteration               | Stable |
+| Azure Blob          | Team collaboration, remote locking (blob lease) | Beta   |
+| OneLake / ADLS Gen2 | State stored inside the Fabric ecosystem        | Beta   |
 
 ### 6.4 Repository Layout
 
@@ -523,16 +521,16 @@ Copy `cicd/azure-devops.yml` to your repo as a YAML pipeline — validate, stagi
 
 ### 8.1 Microsoft Fabric (46 item types)
 
-| Category | Types |
-|----------|-------|
-| Data Engineering | Lakehouse, Notebook, Environment, SparkJobDefinition, GraphQLApi, SnowflakeDatabase, MaterializedLakeView |
-| Data Factory | DataPipeline, CopyJob, MountedDataFactory, ApacheAirflowJob, dbt Job |
-| Data Warehouse | Warehouse, SQLDatabase, MirroredDatabase, MirroredWarehouse, MirroredDatabricksCatalog, CosmosDB, Datamart |
-| Power BI | SemanticModel, Report, PaginatedReport, Dashboard, Dataflow |
-| Data Science | MLModel, MLExperiment |
+| Category               | Types                                                                                                                                              |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Data Engineering       | Lakehouse, Notebook, Environment, SparkJobDefinition, GraphQLApi, SnowflakeDatabase, MaterializedLakeView                                          |
+| Data Factory           | DataPipeline, CopyJob, MountedDataFactory, ApacheAirflowJob, dbt Job                                                                               |
+| Data Warehouse         | Warehouse, SQLDatabase, MirroredDatabase, MirroredWarehouse, MirroredDatabricksCatalog, CosmosDB, Datamart                                         |
+| Power BI               | SemanticModel, Report, PaginatedReport, Dashboard, Dataflow                                                                                        |
+| Data Science           | MLModel, MLExperiment                                                                                                                              |
 | Real-Time Intelligence | Eventhouse, Eventstream, KQLDatabase, KQLDashboard, KQLQueryset, Reflex, DigitalTwinBuilder, DigitalTwinBuilderFlow, EventSchemaSet, GraphQuerySet |
-| AI & Knowledge | DataAgent, OperationsAgent, AnomalyDetector, Ontology |
-| Other | VariableLibrary, UserDataFunction, Graph, GraphModel, Map, HLSCohort |
+| AI & Knowledge         | DataAgent, OperationsAgent, AnomalyDetector, Ontology                                                                                              |
+| Other                  | VariableLibrary, UserDataFunction, Graph, GraphModel, Map, HLSCohort                                                                               |
 
 Plus **OneLake Shortcuts** (ADLS, S3, cross-workspace) as lakehouse sub-resources.
 
@@ -542,15 +540,15 @@ Plus **OneLake Shortcuts** (ADLS, S3, cross-workspace) as lakehouse sub-resource
 
 ### 8.3 Azure (64 service types via Bicep)
 
-| Group | Type keys |
-|-------|-----------|
-| Foundations | `azure_resource_groups`, `azure_storage_accounts`, `azure_deployments` (generic Bicep) |
-| Storage | `azure_blob_storage`, `azure_data_lake_storage`, `azure_files`, `azure_queue_storage`, `azure_table_storage` |
-| Integration / streaming / compute | `azure_data_factories`, `azure_databricks_workspaces`, `azure_databricks_structured_streaming`, `azure_event_hub_namespaces`, `azure_event_grid_topics`, `azure_stream_analytics_jobs`, `azure_iot_hubs`, `azure_logic_apps`, `azure_functions` |
-| Databases | `azure_sql_databases`, `azure_sql_managed_instances`, `azure_sql_virtual_machines`, `azure_postgresql`, `azure_mysql`, `azure_mariadb`, `azure_cosmosdb_accounts`, `azure_redis_cache`, `azure_data_box` |
-| Governance / security / AI | `azure_purview_accounts`, `azure_key_vaults`, `azure_policy_assignments`, `azure_defender_plans`, `azure_machine_learning_workspaces`, `azure_ai_foundry`, `azure_sentinel`, `azure_video_indexer`, `azure_openai`, `azure_load_testing`, `azure_agent_ids`, `azure_service_groups` |
-| Monitoring / observability | `azure_monitor_components`, `azure_alerts`, `azure_diagnostic_settings`, `azure_log_analytics_workspaces`, `azure_metrics`, `azure_workbooks`, `azure_activity_logs`, `azure_database_watchers` |
-| Networking | `azure_network_watchers`, `azure_dns_zones`, `azure_network_interfaces`, `azure_private_dns_zones`, `azure_public_ip_addresses`, `azure_route_tables`, `azure_virtual_networks`, `azure_local_network_gateways`, `azure_peering_services`, `azure_peerings`, `azure_virtual_network_gateways`, `azure_virtual_wans`, `azure_ddos_protection_plans`, `azure_firewalls`, `azure_ip_groups`, `azure_network_security_groups`, `azure_application_gateways`, `azure_application_security_groups` |
+| Group                             | Type keys                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Foundations                       | `azure_resource_groups`, `azure_storage_accounts`, `azure_deployments` (generic Bicep)                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| Storage                           | `azure_blob_storage`, `azure_data_lake_storage`, `azure_files`, `azure_queue_storage`, `azure_table_storage`                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Integration / streaming / compute | `azure_data_factories`, `azure_databricks_workspaces`, `azure_databricks_structured_streaming`, `azure_event_hub_namespaces`, `azure_event_grid_topics`, `azure_stream_analytics_jobs`, `azure_iot_hubs`, `azure_logic_apps`, `azure_functions`                                                                                                                                                                                                                                                                |
+| Databases                         | `azure_sql_databases`, `azure_sql_managed_instances`, `azure_sql_virtual_machines`, `azure_postgresql`, `azure_mysql`, `azure_mariadb`, `azure_cosmosdb_accounts`, `azure_redis_cache`, `azure_data_box`                                                                                                                                                                                                                                                                                                       |
+| Governance / security / AI        | `azure_purview_accounts`, `azure_key_vaults`, `azure_policy_assignments`, `azure_defender_plans`, `azure_machine_learning_workspaces`, `azure_ai_foundry`, `azure_sentinel`, `azure_video_indexer`, `azure_openai`, `azure_load_testing`, `azure_agent_ids`, `azure_service_groups`                                                                                                                                                                                                                      |
+| Monitoring / observability        | `azure_monitor_components`, `azure_alerts`, `azure_diagnostic_settings`, `azure_log_analytics_workspaces`, `azure_metrics`, `azure_workbooks`, `azure_activity_logs`, `azure_database_watchers`                                                                                                                                                                                                                                                                                                                  |
+| Networking                        | `azure_network_watchers`, `azure_dns_zones`, `azure_network_interfaces`, `azure_private_dns_zones`, `azure_public_ip_addresses`, `azure_route_tables`, `azure_virtual_networks`, `azure_local_network_gateways`, `azure_peering_services`, `azure_peerings`, `azure_virtual_network_gateways`, `azure_virtual_wans`, `azure_ddos_protection_plans`, `azure_firewalls`, `azure_ip_groups`, `azure_network_security_groups`, `azure_application_gateways`, `azure_application_security_groups` |
 
 See the [Resource Types Guide](https://microsoft.github.io/UDPi30/guide/resource-types/) for the full reference.
 
@@ -560,38 +558,38 @@ See the [Resource Types Guide](https://microsoft.github.io/UDPi30/guide/resource
 
 ### 9.1 Environment Variables
 
-| Variable | Purpose |
-|----------|---------|
-| `AZURE_TENANT_ID` | Azure AD tenant GUID (service principal auth) |
-| `AZURE_CLIENT_ID` | Service principal application ID |
-| `AZURE_CLIENT_SECRET` | Service principal client secret |
-| `FABRIC_USE_BROWSER` | `true` forces interactive browser login |
-| `FABRIC_CAPACITY_ID` | Capacity GUID for workspace creation during `deploy`/`init` |
-| `AZURE_STORAGE_ACCOUNT_NAME` | Used with `azureblob` or `adls` state backends |
+| Variable                       | Purpose                                                         |
+| ------------------------------ | --------------------------------------------------------------- |
+| `AZURE_TENANT_ID`            | Azure AD tenant GUID (service principal auth)                   |
+| `AZURE_CLIENT_ID`            | Service principal application ID                                |
+| `AZURE_CLIENT_SECRET`        | Service principal client secret                                 |
+| `FABRIC_USE_BROWSER`         | `true` forces interactive browser login                       |
+| `FABRIC_CAPACITY_ID`         | Capacity GUID for workspace creation during `deploy`/`init` |
+| `AZURE_STORAGE_ACCOUNT_NAME` | Used with `azureblob` or `adls` state backends              |
 
 ### 9.2 Tested Item Types
 
 30 Fabric item types verified against a live workspace:
 
-| Status | Item Types |
-|--------|-----------|
-| **Verified** (30) | Lakehouse, Notebook, DataPipeline, Warehouse, Environment, DataAgent, Eventhouse, KQLDatabase, KQLDashboard, KQLQueryset, Eventstream, Reflex, MLModel, MLExperiment, SparkJobDefinition, GraphQLApi, CopyJob, ApacheAirflowJob, Ontology, VariableLibrary, SQLDatabase, CosmosDBDatabase, MirroredAzureDatabricksCatalog, OperationsAgent, AnomalyDetector, DigitalTwinBuilder, GraphQuerySet, GraphModel, Map, UserDataFunction |
-| **List-only** (5) | Datamart, Dashboard, MirroredWarehouse, PaginatedReport, Dataflow |
-| **Needs definition files** (4) | SemanticModel (TMDL), Report (PBIR), MirroredDatabase, MountedDataFactory |
+| Status                               | Item Types                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Verified** (30)              | Lakehouse, Notebook, DataPipeline, Warehouse, Environment, DataAgent, Eventhouse, KQLDatabase, KQLDashboard, KQLQueryset, Eventstream, Reflex, MLModel, MLExperiment, SparkJobDefinition, GraphQLApi, CopyJob, ApacheAirflowJob, Ontology, VariableLibrary, SQLDatabase, CosmosDBDatabase, MirroredAzureDatabricksCatalog, OperationsAgent, AnomalyDetector, DigitalTwinBuilder, GraphQuerySet, GraphModel, Map, UserDataFunction |
+| **List-only** (5)              | Datamart, Dashboard, MirroredWarehouse, PaginatedReport, Dataflow                                                                                                                                                                                                                                                                                                                                                                 |
+| **Needs definition files** (4) | SemanticModel (TMDL), Report (PBIR), MirroredDatabase, MountedDataFactory                                                                                                                                                                                                                                                                                                                                                         |
 
 ### 9.3 Feature Stability
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| validate, plan, deploy, destroy | **Stable** | Tested end-to-end against live Fabric API |
-| drift, status, diff, history, diag | **Stable** | Tested against live workspaces |
-| Incremental deploy (hash-based) | **Stable** | Skips unchanged resources |
-| CI/CD (GitHub Actions) | **Stable** | [Proven end-to-end](https://github.com/PatrickGallucci/udp-udp-cicd-example) |
-| Entra provider (groups/apps) | **Beta** | Graph create/patch/delete, unit-tested against a mocked Graph |
-| Azure provider (64 service types) | **Beta** | Bicep emit + `az deployment`, unit-tested; live deploy depends on service-specific properties |
-| Remote state (OneLake, Blob, ADLS) | **Beta** | Built, not yet tested live |
-| MCP server | **Beta** | 14 tools verified locally |
-| Tenant/admin settings | **Beta** | Declarative tenant settings via Admin API |
+| Feature                            | Status           | Notes                                                                                           |
+| ---------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------- |
+| validate, plan, deploy, destroy    | **Stable** | Tested end-to-end against live Fabric API                                                       |
+| drift, status, diff, history, diag | **Stable** | Tested against live workspaces                                                                  |
+| Incremental deploy (hash-based)    | **Stable** | Skips unchanged resources                                                                       |
+| CI/CD (GitHub Actions)             | **Stable** | [Proven end-to-end](https://github.com/PatrickGallucci/udp-udp-cicd-example)                     |
+| Entra provider (groups/apps)       | **Beta**   | Graph create/patch/delete, unit-tested against a mocked Graph                                   |
+| Azure provider (64 service types)  | **Beta**   | Bicep emit + `az deployment`, unit-tested; live deploy depends on service-specific properties |
+| Remote state (OneLake, Blob, ADLS) | **Beta**   | Built, not yet tested live                                                                      |
+| MCP server                         | **Beta**   | 14 tools verified locally                                                                       |
+| Tenant/admin settings              | **Beta**   | Declarative tenant settings via Admin API                                                       |
 
 ---
 
@@ -607,7 +605,7 @@ Contributions welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ```bash
 git clone https://github.com/microsoft/UDPi30.git
-cd udpi30/dotnet
+cd UDPi30/dotnet
 dotnet build
 dotnet test
 ```
